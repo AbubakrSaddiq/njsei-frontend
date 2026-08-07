@@ -7,6 +7,9 @@ import { ProtectedRoute } from "@/components/ui/ProtectedRoute";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { DashboardPage } from "@/pages/DashboardPage";
+import { SubmissionsPage } from "./pages/author/SubmissionPage";
+import { NewSubmissionPage } from "./pages/author/NewSubmissionPage";
+import { SubmissionDetailPage } from "./pages/author/SubmissionDetailPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,7 +40,9 @@ export default function App() {
             }
           >
             <Route path="/dashboard" element={<DashboardPage />} />
-            {/* More routes added in next sessions */}
+             <Route path="/submissions" element={<SubmissionsPage />} />
+            <Route path="/submissions/new" element={<NewSubmissionPage />} />
+            <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
           </Route>
 
           {/* Default Redirect */}

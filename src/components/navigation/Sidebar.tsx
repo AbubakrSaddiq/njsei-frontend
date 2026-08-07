@@ -32,13 +32,13 @@ const navItems: NavItem[] = [
     label: "My Submissions",
     to: "/submissions",
     icon: <FileText size={18} />,
-    roles: ["author"],
+    // roles: ["author"],
   },
   {
     label: "Submit Manuscript",
     to: "/submissions/new",
     icon: <ClipboardList size={18} />,
-    roles: ["author"],
+    // roles: ["author"],
   },
   {
     label: "Review Queue",

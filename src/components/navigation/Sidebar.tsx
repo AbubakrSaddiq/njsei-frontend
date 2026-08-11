@@ -44,19 +44,18 @@ const navItems: NavItem[] = [
     label: "Review Queue",
     to: "/reviews",
     icon: <BookOpen size={18} />,
-    roles: ["reviewer"],
+    // roles: ["reviewer"],
   },
   {
     label: "Editorial Board",
     to: "/editorial",
     icon: <ClipboardList size={18} />,
-    roles: ["editor", "managing_editor"],
   },
   {
     label: "User Management",
     to: "/admin/users",
     icon: <Users size={18} />,
-    roles: ["admin"],
+    // roles: ["admin"],
   },
   {
     label: "Journal Settings",

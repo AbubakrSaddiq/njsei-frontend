@@ -10,6 +10,9 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { SubmissionsPage } from "./pages/author/SubmissionPage";
 import { NewSubmissionPage } from "./pages/author/NewSubmissionPage";
 import { SubmissionDetailPage } from "./pages/author/SubmissionDetailPage";
+import { EditorialPage } from "./pages/editor/EditorialPage";
+import { ReviewQueuePage } from "@/pages/reviewer/ReviewQueuePage";
+import { UserManagementPage } from "@/pages/admin/UserManagementPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,9 +43,12 @@ export default function App() {
             }
           >
             <Route path="/dashboard" element={<DashboardPage />} />
-             <Route path="/submissions" element={<SubmissionsPage />} />
+            <Route path="/submissions" element={<SubmissionsPage />} />
             <Route path="/submissions/new" element={<NewSubmissionPage />} />
             <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
+            <Route path="/editorial" element={<EditorialPage />} />
+            <Route path="/reviews" element={<ReviewQueuePage />} />
+            <Route path="/admin/users" element={<UserManagementPage />} />
           </Route>
 
           {/* Default Redirect */}

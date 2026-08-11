@@ -26,6 +26,7 @@ export function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -108,6 +109,44 @@ export function LoginPage() {
           Create account
         </Link>
       </p>
+      {/* Dev helper - remove in production */}
+      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+        <p className="text-xs font-medium text-blue-700 mb-2">
+          Quick Login (Dev)
+        </p>
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={() => {
+              setValue("email", "alice@example.com");
+              setValue("password", "password123");
+            }}
+            className="block text-xs text-blue-600 hover:underline"
+          >
+            Login as Author (Alice)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setValue("email", "editor@njsei.com");
+              setValue("password", "password123");
+            }}
+            className="block text-xs text-blue-600 hover:underline"
+          >
+            Login as Editor
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setValue("email", "reviewer@njsei.com");
+              setValue("password", "password123");
+            }}
+            className="block text-xs text-blue-600 hover:underline"
+          >
+            Login as Reviewer
+          </button>
+        </div>
+      </div>
     </Card>
   );
 }

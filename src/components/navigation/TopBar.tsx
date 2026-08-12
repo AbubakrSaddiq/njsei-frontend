@@ -2,6 +2,7 @@ import { Menu, Bell, Search } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { NotificationBell } from "../ui/NotificationBell";
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -64,13 +65,7 @@ export function TopBar({ onMenuClick, title }: TopBarProps) {
           <Search size={18} />
         </button>
 
-        <button
-          className="relative p-2 rounded-lg hover:bg-gray-50 text-gray-500 transition-colors"
-          aria-label="Notifications"
-        >
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-        </button>
+        <NotificationBell />
 
         <div className="w-8 h-8 rounded-full bg-[#2A438C] flex items-center justify-center text-white font-semibold text-sm ml-1 cursor-pointer hover:bg-[#17254D] transition-colors">
           {user?.name?.charAt(0).toUpperCase()}

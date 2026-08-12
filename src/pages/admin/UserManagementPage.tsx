@@ -159,29 +159,38 @@ export function UserManagementPage() {
               key={user.id}
               className="hover:border-primary/30 transition-all"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium text-gray-900 text-sm">
-                      {user.name}
-                    </p>
-                    {user.roles.map((role) => (
-                      <span
-                        key={role.slug}
-                        className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full font-medium"
-                      >
-                        {role.name}
-                      </span>
-                    ))}
+              <div className="flex flex-col gap-4">
+                {/* User Info */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                    {user.name.charAt(0).toUpperCase()}
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5">{user.email}</p>
-                  {user.affiliation && (
-                    <p className="text-xs text-gray-400">{user.affiliation}</p>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium text-gray-900 text-sm">
+                        {user.name}
+                      </p>
+                      {user.roles.map((role) => (
+                        <span
+                          key={role.slug}
+                          className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full font-medium"
+                        >
+                          {role.name}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                      {user.email}
+                    </p>
+                    {user.affiliation && (
+                      <p className="text-xs text-gray-400 truncate">
+                        {user.affiliation}
+                      </p>
+                    )}
+                  </div>
                 </div>
+
+                {/* Action */}
                 <Button
                   size="sm"
                   variant="outline"

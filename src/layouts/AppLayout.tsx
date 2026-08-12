@@ -21,15 +21,18 @@ export function AppLayout() {
   const [showWarning, setShowWarning] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const title = pageTitles[location.pathname] ?? "NJSEI";
 
-  const handleWarning = useCallback(() => {
-    setShowWarning(true);
-  }, []);
+  const title =
+    pageTitles[location.pathname] ??
+    (location.pathname.startsWith("/submissions/")
+      ? "Submission Details"
+      : "NJSEI");
+
+  const handleWarning = useCallback(() => setShowWarning(true), []);
 
   const handleTimeout = useCallback(() => {
     setShowWarning(false);
-    toast.error("Your session has expired. Please sign in again.");
+    toast.error("Session expired. Please sign in again.");
     navigate("/login");
   }, [navigate]);
 
@@ -43,19 +46,19 @@ export function AppLayout() {
   const handleStayLoggedIn = useCallback(() => {
     setShowWarning(false);
     stayLoggedIn();
-    toast.success("Session extended successfully");
+    toast.success("Session extended");
   }, [stayLoggedIn]);
 
   const handleLogout = useCallback(() => {
     setShowWarning(false);
     logout();
     navigate("/login");
-    toast.success("Logged out successfully");
   }, [logout, navigate]);
 
   return (
-    <div className="flex h-screen bg-surface overflow-hidden">
+    <div className="flex h-screen bg-[#F5F6FA] overflow-hidden">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar onMenuClick={() => setSidebarOpen(true)} title={title} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">

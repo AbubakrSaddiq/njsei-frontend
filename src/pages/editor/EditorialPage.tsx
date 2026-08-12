@@ -214,8 +214,8 @@ export function EditorialPage() {
               key={submission.id}
               className="hover:border-primary/30 transition-all duration-200"
             >
-              <div className="flex items-start gap-4">
-                {/* Main Content */}
+              <div className="flex flex-col gap-4">
+                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 flex-wrap mb-1">
                     <Badge status={submission.status} />
@@ -244,8 +244,8 @@ export function EditorialPage() {
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                {/* Actions  */}
+                <div className="flex items-center gap-2 flex-wrap">
                   {submission.status === "submitted" ||
                   submission.status === "editorial_review" ? (
                     <>
@@ -276,6 +276,19 @@ export function EditorialPage() {
                     <>
                       <Button
                         size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setInviteModal({
+                            open: true,
+                            submissionId: submission.id,
+                          })
+                        }
+                      >
+                        <UserPlus size={13} />
+                        Invite Reviewer
+                      </Button>
+                      <Button
+                        size="sm"
                         onClick={() => acceptMutation.mutate(submission.id)}
                         loading={acceptMutation.isPending}
                       >
@@ -291,7 +304,7 @@ export function EditorialPage() {
                         loading={requestRevisionMutation.isPending}
                       >
                         <RotateCcw size={13} />
-                        Request Revision
+                        Revision
                       </Button>
                       <Button
                         size="sm"
@@ -304,45 +317,16 @@ export function EditorialPage() {
                       </Button>
                     </>
                   ) : null}
-
-                  {/* {submission.status === "under_review" && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setInviteModal({
-                          open: true,
-                          submissionId: submission.id,
-                        })
-                      }
-                    >
-                      <UserPlus size={13} />
-                      Invite Reviewer
-                    </Button>
-                  )} */}
-
-                  <Link to={`/submissions/${submission.id}`}>
-                    <Button size="sm" variant="ghost">
-                      View
-                      <ChevronRight size={13} />
-                    </Button>
-                  </Link>
+                  <div>
+                    <Link to={`/submissions/${submission.id}`}>
+                      <Button size="sm" variant="ghost">
+                        View
+                        <ChevronRight size={13} />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
-              <br />
-              {/* Invite reviewer button */}
-              {submission.status === "under_review" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    setInviteModal({ open: true, submissionId: submission.id })
-                  }
-                >
-                  <UserPlus size={13} />
-                  Invite Reviewer
-                </Button>
-              )}
             </Card>
           ))}
           {/* Invite Reviewer Modal */}

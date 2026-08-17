@@ -14,6 +14,7 @@ const pageTitles: Record<string, string> = {
   "/editorial": "Editorial Board",
   "/admin/users": "User Management",
   "/admin/journals": "Journal Settings",
+  "/profile": "My Profile",
 };
 
 export function AppLayout() {

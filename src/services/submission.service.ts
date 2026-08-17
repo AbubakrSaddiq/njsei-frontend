@@ -57,4 +57,12 @@ export const submissionService = {
     const { data } = await api.post(`/submissions/${id}/reject`, { reason })
     return data
   },
+
+  async downloadFile(submissionId: number, fileId: number): Promise<Blob> {
+  const { data } = await api.get(`/submissions/${submissionId}/files/${fileId}/download`, {
+    responseType: 'blob',
+  })
+  return data
+  },
+  
 }

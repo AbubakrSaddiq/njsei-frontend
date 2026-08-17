@@ -3,6 +3,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NotificationBell } from "../ui/NotificationBell";
+import { Link } from "react-router-dom";
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -67,9 +68,11 @@ export function TopBar({ onMenuClick, title }: TopBarProps) {
 
         <NotificationBell />
 
-        <div className="w-8 h-8 rounded-full bg-[#2A438C] flex items-center justify-center text-white font-semibold text-sm ml-1 cursor-pointer hover:bg-[#17254D] transition-colors">
-          {user?.name?.charAt(0).toUpperCase()}
-        </div>
+        <Link to="/profile">
+          <div className="w-8 h-8 rounded-full bg-[#2A438C] flex items-center justify-center text-white font-semibold text-sm ml-1 cursor-pointer hover:bg-[#17254D] transition-colors">
+            {user?.name?.charAt(0).toUpperCase()}
+          </div>
+        </Link>
       </div>
     </header>
   );

@@ -14,6 +14,7 @@ import {
 import { useAuthStore } from "@/store/auth.store";
 import { authService } from "@/services/auth.service";
 import toast from "react-hot-toast";
+import { UserCircle } from "lucide-react";
 
 interface NavItem {
   label: string;
@@ -63,6 +64,11 @@ const navItems: NavItem[] = [
     to: "/admin/journals",
     icon: <Settings size={18} />,
     // roles: ["admin"],
+  },
+  {
+    label: "Profile",
+    to: "/profile",
+    icon: <UserCircle size={18} />,
   },
 ];
 
@@ -190,6 +196,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <div className="px-3 py-2">
             <p className="text-white/20 text-xs">v1.0.0</p>
           </div>
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/8 hover:text-white transition-all duration-150"

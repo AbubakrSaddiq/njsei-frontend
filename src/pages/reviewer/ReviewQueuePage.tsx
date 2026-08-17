@@ -1,12 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { BookOpen, CheckCircle, XCircle, Clock } from "lucide-react";
+import {
+  BookOpen,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Download,
+  FileText,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import { reviewService } from "@/services/review.service";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { Badge } from "@/components/ui/Badge";
+import api from "@/services/api";
 
 export function ReviewQueuePage() {
   const queryClient = useQueryClient();
@@ -21,6 +29,8 @@ export function ReviewQueuePage() {
     recommendation: "",
   });
   const [submitting, setSubmitting] = useState(false);
+
+  const [downloading, setDownloading] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["review-invitations"],
@@ -46,6 +56,34 @@ export function ReviewQueuePage() {
     },
     onError: () => toast.error("Failed to decline invitation"),
   });
+
+  const handleDownload = async (
+    submissionId: number,
+    fileId: number,
+    filename: string,
+  ) => {
+    setDownloading(fileId);
+    try {
+      const response = await api.get(
+        `/submissions/${submissionId}/files/${fileId}/download`,
+        { responseType: "blob" },
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(`Downloaded ${filename}`);
+    } catch {
+      toast.error("Failed to download file");
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   const handleSubmitReview = async () => {
     if (!reviewModal.invitationId) return;
@@ -203,19 +241,59 @@ export function ReviewQueuePage() {
                   )}
 
                   {invitation.status === "accepted" && !invitation.review && (
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        setReviewModal({
-                          open: true,
-                          invitationId: invitation.id,
-                        })
-                      }
-                    >
-                      <BookOpen size={13} />
-                      Submit Review
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          setReviewModal({
+                            open: true,
+                            invitationId: invitation.id,
+                          })
+                        }
+                      >
+                        <BookOpen size={13} />
+                        Submit Review
+                      </Button>
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <p className="text-xs text-gray-500 mb-2 font-medium">
+                          Manuscript Files:
+                        </p>
+                        {invitation.submission?.current_version?.files?.map(
+                          (file: any) => (
+                            <div
+                              key={file.id}
+                              className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
+                            >
+                              <FileText
+                                size={14}
+                                className="text-primary flex-shrink-0"
+                              />
+                              <span className="text-xs text-gray-700 flex-1 truncate">
+                                {file.original_filename}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                loading={downloading === file.id}
+                                onClick={() =>
+                                  handleDownload(
+                                    invitation.submission.id,
+                                    file.id,
+                                    file.original_filename,
+                                  )
+                                }
+                              >
+                                <Download size={12} />
+                                Download
+                              </Button>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </>
                   )}
+
+                  {/* Download manuscript */}
 
                   {invitation.status === "completed" && (
                     <span className="text-xs text-green-600 font-medium flex items-center gap-1">

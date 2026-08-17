@@ -13,6 +13,9 @@ import { SubmissionDetailPage } from "./pages/author/SubmissionDetailPage";
 import { EditorialPage } from "./pages/editor/EditorialPage";
 import { ReviewQueuePage } from "@/pages/reviewer/ReviewQueuePage";
 import { UserManagementPage } from "@/pages/admin/UserManagementPage";
+import { ProfilePage } from "./pages/ProfilePage";
+import { PublicLayout } from "./layouts/PublicLayout";
+import { LandingPage } from "./pages/public/LandingPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,7 +31,13 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          {/* Public Auth Routes */}
+          {/* Public routes */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/journals" element={<LandingPage />} />
+            <Route path="/about" element={<LandingPage />} />
+          </Route>
+          {/* Auth Routes */}
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
@@ -49,11 +58,12 @@ export default function App() {
             <Route path="/editorial" element={<EditorialPage />} />
             <Route path="/reviews" element={<ReviewQueuePage />} />
             <Route path="/admin/users" element={<UserManagementPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
           </Route>
 
           {/* Default Redirect */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
 

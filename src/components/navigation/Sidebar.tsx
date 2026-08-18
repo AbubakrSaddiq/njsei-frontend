@@ -10,6 +10,7 @@ import {
   LogOut,
   X,
   ChevronRight,
+  BookMarked,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { authService } from "@/services/auth.service";
@@ -69,6 +70,11 @@ const navItems: NavItem[] = [
     label: "Profile",
     to: "/profile",
     icon: <UserCircle size={18} />,
+  },
+  {
+    label: "Issue Management",
+    to: "/issues",
+    icon: <BookMarked size={18} />,
   },
 ];
 

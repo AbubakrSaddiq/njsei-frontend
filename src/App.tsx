@@ -16,6 +16,7 @@ import { UserManagementPage } from "@/pages/admin/UserManagementPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { PublicLayout } from "./layouts/PublicLayout";
 import { LandingPage } from "./pages/public/LandingPage";
+import { IssueManagementPage } from "./pages/editor/IssueManagementPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="/reviews" element={<ReviewQueuePage />} />
             <Route path="/admin/users" element={<UserManagementPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/issues" element={<IssueManagementPage />} />
           </Route>
 
           {/* Default Redirect */}

@@ -16,6 +16,7 @@ const pageTitles: Record<string, string> = {
   "/admin/journals": "Journal Settings",
   "/profile": "My Profile",
   "/issues": "Issue Management",
+  "/search": "Search",
 };
 
 export function AppLayout() {

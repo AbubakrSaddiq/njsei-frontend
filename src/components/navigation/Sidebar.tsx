@@ -11,6 +11,7 @@ import {
   X,
   ChevronRight,
   BookMarked,
+  Search,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { authService } from "@/services/auth.service";
@@ -75,6 +76,11 @@ const navItems: NavItem[] = [
     label: "Issue Management",
     to: "/issues",
     icon: <BookMarked size={18} />,
+  },
+  {
+    label: "Search",
+    to: "/search",
+    icon: <Search size={18} />,
   },
 ];
 

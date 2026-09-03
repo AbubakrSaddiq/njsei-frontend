@@ -101,7 +101,7 @@ export function EditorialPage() {
     setInviting(true);
     try {
       // Find user by email then invite
-      const response = await api.post(
+      await api.post(
         `/submissions/${inviteModal.submissionId}/invite-reviewer`,
         { email: reviewerEmail },
       );

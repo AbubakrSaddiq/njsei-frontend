@@ -1,4 +1,4 @@
-import { Menu, Bell, Search } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";

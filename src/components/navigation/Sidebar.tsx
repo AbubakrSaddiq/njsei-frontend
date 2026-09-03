@@ -35,37 +35,37 @@ const navItems: NavItem[] = [
     label: "My Submissions",
     to: "/submissions",
     icon: <FileText size={18} />,
-    // roles: ["author"],
+    roles: ["author"],
   },
   {
     label: "Submit Manuscript",
     to: "/submissions/new",
     icon: <ClipboardList size={18} />,
-    // roles: ["author"],
+    roles: ["author"],
   },
   {
     label: "Review Queue",
     to: "/reviews",
     icon: <BookOpen size={18} />,
-    // roles: ["reviewer"],
+    roles: ["reviewer"],
   },
   {
     label: "Editorial Board",
     to: "/editorial",
     icon: <ClipboardList size={18} />,
-    // roles: ["editor", "managing_editor"],
+    roles: ["editor", "managing_editor"],
   },
   {
     label: "User Management",
     to: "/admin/users",
     icon: <Users size={18} />,
-    // roles: ["admin", "managing_editor"],
+    roles: ["admin", "managing_editor"],
   },
   {
     label: "Journal Settings",
     to: "/admin/journals",
     icon: <Settings size={18} />,
-    // roles: ["admin"],
+    roles: ["admin"],
   },
   {
     label: "Profile",
@@ -76,6 +76,7 @@ const navItems: NavItem[] = [
     label: "Issue Management",
     to: "/issues",
     icon: <BookMarked size={18} />,
+    roles: ["admin", "editor", "managing_editor"],
   },
   {
     label: "Search",
@@ -130,18 +131,26 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-          <div>
-            <h1 className="text-white font-serif font-bold text-xl leading-tight tracking-tight">
-              NJSEI
-            </h1>
-            <p className="text-white/40 text-xs mt-0.5 leading-tight">
-              Journal Platform
-            </p>
+        <div className="flex items-center  justify-between px-5 py-4 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            {/* Logo Image */}
+            {/* <img
+              src="/src/assets/logo_2.png"
+              alt="NJSEI Logo"
+              className="h-10 w-auto"
+            /> */}
+            <div>
+              <h1 className="text-white font-serif font-bold text-xl leading-tight tracking-wide">
+                NJSEI
+              </h1>
+              <p className="text-white/40 text-xs mt-0.5 leading-tight">
+                Journal Platform
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10"
           >
             <X size={18} />
           </button>

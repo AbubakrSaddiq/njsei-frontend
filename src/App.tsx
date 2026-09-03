@@ -18,6 +18,7 @@ import { PublicLayout } from "./layouts/PublicLayout";
 import { LandingPage } from "./pages/public/LandingPage";
 import { IssueManagementPage } from "./pages/editor/IssueManagementPage";
 import { SearchPage } from "./pages/SearchPage";
+import { useInitAuth } from "./hooks/useInitAuth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,47 +29,55 @@ const queryClient = new QueryClient({
   },
 });
 
+function AppWithAuth() {
+  useInitAuth();
+
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/journals" element={<LandingPage />} />
+        <Route path="/about" element={<LandingPage />} />
+      </Route>
+      {/* Auth Routes */}
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Route>
+
+      {/* Protected App Routes */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/submissions" element={<SubmissionsPage />} />
+        <Route path="/submissions/new" element={<NewSubmissionPage />} />
+        <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
+        <Route path="/editorial" element={<EditorialPage />} />
+        <Route path="/reviews" element={<ReviewQueuePage />} />
+        <Route path="/admin/users" element={<UserManagementPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/issues" element={<IssueManagementPage />} />
+        <Route path="/search" element={<SearchPage />} />
+      </Route>
+
+      {/* Default Redirect */}
+      <Route path="/" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          {/* Public routes */}
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/journals" element={<LandingPage />} />
-            <Route path="/about" element={<LandingPage />} />
-          </Route>
-          {/* Auth Routes */}
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-          </Route>
-
-          {/* Protected App Routes */}
-          <Route
-            element={
-              <ProtectedRoute>
-                <AppLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/submissions" element={<SubmissionsPage />} />
-            <Route path="/submissions/new" element={<NewSubmissionPage />} />
-            <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
-            <Route path="/editorial" element={<EditorialPage />} />
-            <Route path="/reviews" element={<ReviewQueuePage />} />
-            <Route path="/admin/users" element={<UserManagementPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/issues" element={<IssueManagementPage />} />
-            <Route path="/search" element={<SearchPage />} />
-          </Route>
-
-          {/* Default Redirect */}
-          <Route path="/" element={<Navigate to="/" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AppWithAuth />
       </BrowserRouter>
 
       <Toaster

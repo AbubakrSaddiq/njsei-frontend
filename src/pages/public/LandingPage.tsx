@@ -290,40 +290,39 @@ export function LandingPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {journals.map((journal) => (
-              <Card
-                key={journal.id}
-                className="hover:shadow-md hover:border-primary/20 transition-all cursor-pointer group"
-              >
-                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mb-4">
-                  <BookOpen size={20} className="text-white" />
-                </div>
-                <h3 className="font-semibold text-gray-900 font-serif mb-1 group-hover:text-primary transition-colors">
-                  {journal.title}
-                </h3>
-                {journal.issn && (
-                  <p className="text-xs text-gray-400 mb-2">
-                    ISSN: {journal.issn}
-                  </p>
-                )}
-                {journal.description && (
-                  <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">
-                    {journal.description}
-                  </p>
-                )}
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <div className="flex flex-wrap gap-2">
-                    {journal.sections?.slice(0, 3).map((section) => (
-                      <span
-                        key={section.id}
-                        className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full"
-                      >
-                        {section.title}
-                      </span>
-                    ))}
+            {journals.map((journal: any) => (
+              <Link key={journal.id} to={`/journals/${journal.slug}`}>
+                <Card className="hover:shadow-md hover:border-primary/20 transition-all cursor-pointer group h-full">
+                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mb-4">
+                    <BookOpen size={20} className="text-white" />
                   </div>
-                </div>
-              </Card>
+                  <h3 className="font-semibold text-gray-900 font-serif mb-1 group-hover:text-primary transition-colors">
+                    {journal.title}
+                  </h3>
+                  {journal.issn && (
+                    <p className="text-xs text-gray-400 mb-2">
+                      ISSN: {journal.issn}
+                    </p>
+                  )}
+                  {journal.description && (
+                    <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">
+                      {journal.description}
+                    </p>
+                  )}
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex flex-wrap gap-2">
+                      {journal.sections?.slice(0, 3).map((section: any) => (
+                        <span
+                          key={section.id}
+                          className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full"
+                        >
+                          {section.title}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

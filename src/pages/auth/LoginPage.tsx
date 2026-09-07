@@ -38,7 +38,15 @@ export function LoginPage() {
       const response = await authService.login(data);
       setAuth(response.user, response.access_token);
       toast.success(`Welcome back, ${response.user.name}!`);
-      navigate("/dashboard");
+
+      // Check for stored redirect
+      const redirect = sessionStorage.getItem("redirect_after_login");
+      if (redirect) {
+        sessionStorage.removeItem("redirect_after_login");
+        navigate(redirect, { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message ?? "Invalid credentials");

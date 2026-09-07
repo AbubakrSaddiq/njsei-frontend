@@ -11,4 +11,9 @@ export const journalService = {
     const { data } = await api.get(`/journals/${id}`)
     return data
   },
+
+  async getBySlug(slug: string): Promise<{ journal: Journal }> {
+    const { data } = await api.get(`/journals/slug/${slug}`)
+    return data
+  },
 }

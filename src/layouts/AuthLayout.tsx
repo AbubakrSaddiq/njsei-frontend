@@ -1,6 +1,14 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
+import { useAuthStore } from "@/store/auth.store";
 
 export function AuthLayout() {
+  const { isAuthenticated } = useAuthStore();
+
+  // If already logged in, go to dashboard
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F6FA] flex">
       {/* Left Panel - Branding */}
@@ -38,10 +46,9 @@ export function AuthLayout() {
         </div>
       </div>
 
-      {/* Right Panel - Form */}
+      {/* Right Panel */}
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
-          {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8">
             <h1 className="text-[#17254D] font-serif text-2xl font-bold">
               NJSEI
@@ -50,7 +57,6 @@ export function AuthLayout() {
               Nigerian Journal of Science & Engineering Infrastructure
             </p>
           </div>
-
           <Outlet />
         </div>
       </div>

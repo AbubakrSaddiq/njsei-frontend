@@ -18,6 +18,23 @@ export interface AuthState {
   isAuthenticated: boolean
 }
 
+export interface Issue{
+  id: number
+  volume: number
+  issue_number: number
+  label: string
+  published_at: string | null
+  is_pulished: boolean
+  submissions_count: number
+  submissions?: {
+    id: number
+    title: string
+    author: string
+    section: string
+    page_number?:string
+    status: string
+  }[]
+}
 // Journal Types
 export interface Journal {
   id: number
@@ -26,6 +43,7 @@ export interface Journal {
   issn?: string
   description?: string
   sections: Section[]
+  issues?: Issue[]
 }
 
 export interface Section {

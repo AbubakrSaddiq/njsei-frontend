@@ -23,12 +23,7 @@ api.interceptors.response.use(
     const status = error.response?.status
     const message = error.response?.data?.message
 
-    if (status === 401) {
-      localStorage.removeItem('njsei_token')
-      localStorage.removeItem('njsei_user')
-      window.location.href = '/login'
-    }
-
+    // NEVER auto redirect - let components handle 401
     if (status === 403) {
       toast.error('You do not have permission to perform this action.')
     }

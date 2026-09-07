@@ -45,7 +45,14 @@ export function RegisterPage() {
       const response = await authService.register(data);
       setAuth(response.user, response.access_token);
       toast.success("Account created successfully!");
-      navigate("/dashboard");
+
+      const redirect = sessionStorage.getItem("redirect_after_login");
+      if (redirect) {
+        sessionStorage.removeItem("redirect_after_login");
+        navigate(redirect);
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message ?? "Registration failed");

@@ -12,6 +12,7 @@ import {
   ChevronRight,
   BookMarked,
   Search,
+  Home,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { authService } from "@/services/auth.service";
@@ -217,7 +218,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <div className="px-3 py-2">
             <p className="text-white/20 text-xs">v1.0.0</p>
           </div>
-
+          <a
+            href="/"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/10 hover:text-white transition-all duration-150"
+          >
+            <Home size={18} />
+            <span>Visit Website</span>
+          </a>
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/8 hover:text-white transition-all duration-150"

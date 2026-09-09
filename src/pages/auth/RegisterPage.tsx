@@ -62,86 +62,97 @@ export function RegisterPage() {
   };
 
   return (
-    <Card>
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#1a1a2e] font-serif">
-          Create account
-        </h2>
-        <p className="text-[#565656] text-sm mt-2">
-          Join the NJSEI research community
+    <>
+      <Card>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-[#1a1a2e] font-serif">
+            Create account
+          </h2>
+          <p className="text-[#565656] text-sm mt-2">
+            Join the NJSEI research community
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <Input
+            label="Full name"
+            placeholder="Dr. John Adeyemi"
+            required
+            leftIcon={<User size={16} />}
+            error={errors.name?.message}
+            {...register("name")}
+          />
+
+          <Input
+            label="Email address"
+            type="email"
+            placeholder="you@institution.edu.ng"
+            required
+            leftIcon={<Mail size={16} />}
+            error={errors.email?.message}
+            {...register("email")}
+          />
+
+          <Input
+            label="Institution / Affiliation"
+            placeholder="University of Lagos"
+            leftIcon={<Building size={16} />}
+            error={errors.affiliation?.message}
+            hint="Optional but recommended for author profiles"
+            {...register("affiliation")}
+          />
+
+          <Input
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            required
+            leftIcon={<Lock size={16} />}
+            error={errors.password?.message}
+            hint="Minimum 8 characters"
+            {...register("password")}
+          />
+
+          <Input
+            label="Confirm password"
+            type="password"
+            placeholder="••••••••"
+            required
+            leftIcon={<Lock size={16} />}
+            error={errors.password_confirmation?.message}
+            {...register("password_confirmation")}
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            loading={loading}
+            size="lg"
+            className="mt-2"
+          >
+            Create Account
+          </Button>
+        </form>
+
+        <p className="text-center text-sm text-[#565656] mt-6">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="text-[#2A438C] font-medium hover:text-[#17254D]"
+          >
+            Sign in
+          </Link>
         </p>
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input
-          label="Full name"
-          placeholder="Dr. John Adeyemi"
-          required
-          leftIcon={<User size={16} />}
-          error={errors.name?.message}
-          {...register("name")}
-        />
-
-        <Input
-          label="Email address"
-          type="email"
-          placeholder="you@institution.edu.ng"
-          required
-          leftIcon={<Mail size={16} />}
-          error={errors.email?.message}
-          {...register("email")}
-        />
-
-        <Input
-          label="Institution / Affiliation"
-          placeholder="University of Lagos"
-          leftIcon={<Building size={16} />}
-          error={errors.affiliation?.message}
-          hint="Optional but recommended for author profiles"
-          {...register("affiliation")}
-        />
-
-        <Input
-          label="Password"
-          type="password"
-          placeholder="••••••••"
-          required
-          leftIcon={<Lock size={16} />}
-          error={errors.password?.message}
-          hint="Minimum 8 characters"
-          {...register("password")}
-        />
-
-        <Input
-          label="Confirm password"
-          type="password"
-          placeholder="••••••••"
-          required
-          leftIcon={<Lock size={16} />}
-          error={errors.password_confirmation?.message}
-          {...register("password_confirmation")}
-        />
-
-        <Button
-          type="submit"
-          fullWidth
-          loading={loading}
-          size="lg"
-          className="mt-2"
+      </Card>
+      {/* Navigate to homepage */}
+      <p className="text-center text-sm text-gray-500 mt-4">
+        <a
+          href="/"
+          className="text-primary hover:underline flex items-center justify-center gap-1"
         >
-          Create Account
-        </Button>
-      </form>
-
-      <p className="text-center text-sm text-[#565656] mt-6">
-        Already have an account?{" "}
-        <Link
-          to="/login"
-          className="text-[#2A438C] font-medium hover:text-[#17254D]"
-        >
-          Sign in
-        </Link>
+          ← Back to NJSEI Website
+        </a>
       </p>
-    </Card>
+    </>
   );
 }

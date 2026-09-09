@@ -1,107 +1,167 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useQuery } from '@tanstack/react-query'
-import { Upload, X, FileText, ChevronLeft } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Textarea } from '@/components/ui/Textarea'
-import { Select } from '@/components/ui/Select'
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
-import { journalService } from '@/services/journal.service'
-import api from '@/services/api'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
+import { Upload, X, FileText, ChevronLeft } from "lucide-react";
+import toast from "react-hot-toast";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Select } from "@/components/ui/Select";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/Card";
+import { journalService } from "@/services/journal.service";
+import api from "@/services/api";
+
+// Define error response types
+interface ValidationErrorResponse {
+  message?: string;
+  errors?: Record<string, string[]>;
+}
+
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: ValidationErrorResponse;
+  };
+}
 
 const schema = z.object({
-  journal_id: z.string().min(1, 'Please select a journal'),
-  section_id: z.string().min(1, 'Please select a section'),
-  title: z.string().min(10, 'Title must be at least 10 characters'),
-  abstract: z.string().min(100, 'Abstract must be at least 100 characters'),
-  keywords: z.string().min(3, 'Please provide at least one keyword'),
+  journal_id: z.string().min(1, "Please select a journal"),
+  section_id: z.string().min(1, "Please select a section"),
+  title: z.string().min(10, "Title must be at least 10 characters"),
+  abstract: z.string().min(100, "Abstract must be at least 100 characters"),
+  keywords: z.string().min(3, "Please provide at least one keyword"),
   cover_letter: z.string().optional(),
-})
+});
 
-type FormData = z.infer<typeof schema>
+type FormData = z.infer<typeof schema>;
 
 export function NewSubmissionPage() {
-  const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
-  const [selectedJournalId, setSelectedJournalId] = useState<string>('')
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [selectedJournalId, setSelectedJournalId] = useState<string>("");
 
   const { data: journalsData } = useQuery({
-    queryKey: ['journals'],
+    queryKey: ["journals"],
     queryFn: journalService.getAll,
-  })
+  });
 
-  const journals = journalsData?.journals ?? []
-  const selectedJournal = journals.find((j) => j.id.toString() === selectedJournalId)
-  const sections = selectedJournal?.sections ?? []
+  const journals = journalsData?.journals ?? [];
+  const selectedJournal = journals.find(
+    (j) => j.id.toString() === selectedJournalId,
+  );
+  const sections = selectedJournal?.sections ?? [];
 
   const {
     register,
     handleSubmit,
     watch,
+    setError,
     formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(schema) })
+  } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  const abstractValue = watch('abstract') ?? ''
+  const abstractValue = watch("abstract") ?? "";
 
-const onSubmit = async (data: FormData) => {
-  if (!file) {
-    toast.error('Please upload your manuscript file')
-    return
-  }
-
-  setLoading(true)
-  try {
-    // Step 1: Create submission (without file)
-    const submissionPayload = {
-      journal_id: data.journal_id,
-      section_id: data.section_id,
-      title: data.title,
-      abstract: data.abstract,
-      keywords: data.keywords,
-      cover_letter: data.cover_letter ?? '',
+  const onSubmit = async (data: FormData) => {
+    if (!file) {
+      toast.error("Please upload your manuscript file");
+      return;
     }
 
-    const response = await api.post('/submissions', submissionPayload)
+    setLoading(true);
+    try {
+      // Step 1: Create submission (without file)
+      const submissionPayload = {
+        journal_id: data.journal_id,
+        section_id: data.section_id,
+        title: data.title,
+        abstract: data.abstract,
+        keywords: data.keywords,
+        cover_letter: data.cover_letter ?? "",
+      };
 
-    // Step 2: Get submission ID from response
-    const submission = response.data?.data ?? response.data
-    const submissionId = submission?.id
+      const response = await api.post("/submissions", submissionPayload);
 
-    if (!submissionId) {
-      throw new Error('Could not get submission ID')
+      // Get submission ID from response
+      const submission = response.data?.data ?? response.data;
+      const submissionId = submission?.id;
+
+      if (!submissionId) {
+        throw new Error("Could not get submission ID");
+      }
+
+      // Step 2: Upload manuscript file separately
+      const fileFormData = new FormData();
+      fileFormData.append("manuscript", file);
+      fileFormData.append("upload_notes", "Initial submission");
+
+      await api.post(`/submissions/${submissionId}/upload`, fileFormData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      toast.success("Manuscript submitted successfully!");
+      navigate(`/submissions/${submissionId}`);
+    } catch (error: unknown) {
+      // ✅ Properly typed error handling
+      const apiError = error as ApiError;
+
+      // Check if it's a validation error (422)
+      if (
+        apiError.response?.status === 422 &&
+        apiError.response?.data?.errors
+      ) {
+        const validationErrors = apiError.response.data.errors;
+
+        // Set errors on form fields
+        Object.entries(validationErrors).forEach(([field, messages]) => {
+          // Map backend field names to form field names
+          const fieldMap: Record<string, string> = {
+            journal_id: "journal_id",
+            section_id: "section_id",
+            title: "title",
+            abstract: "abstract",
+            keywords: "keywords",
+            cover_letter: "cover_letter",
+          };
+
+          const formField = fieldMap[field];
+          if (formField) {
+            setError(formField as any, {
+              type: "manual",
+              message: messages[0],
+            });
+          }
+        });
+
+        // Show a summary toast
+        toast.error("Please check the form for errors");
+      } else {
+        // Show generic error
+        const message =
+          apiError.response?.data?.message ||
+          "Submission failed. Please try again.";
+        toast.error(message);
+      }
+
+      console.error("Submission error:", error);
+    } finally {
+      setLoading(false);
     }
-
-    // Step 3: Upload manuscript file separately
-    const fileFormData = new FormData()
-    fileFormData.append('manuscript', file)
-    fileFormData.append('upload_notes', 'Initial submission')
-
-    await api.post(`/submissions/${submissionId}/upload`, fileFormData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-
-    toast.success('Manuscript submitted successfully!')
-    navigate(`/submissions/${submissionId}`)
-
-  } catch (error: unknown) {
-    const err = error as { response?: { data?: { message?: string } } }
-    toast.error(err.response?.data?.message ?? 'Submission failed. Please try again.')
-  } finally {
-    setLoading(false)
-  }
-}
+  };
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Back Button */}
       <button
-        onClick={() => navigate('/submissions')}
+        onClick={() => navigate("/submissions")}
         className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors"
       >
         <ChevronLeft size={16} />
@@ -109,7 +169,9 @@ const onSubmit = async (data: FormData) => {
       </button>
 
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 font-serif">New Submission</h2>
+        <h2 className="text-2xl font-bold text-gray-900 font-serif">
+          New Submission
+        </h2>
         <p className="text-sm text-gray-500 mt-1">
           Complete all required fields to submit your manuscript for review
         </p>
@@ -120,27 +182,39 @@ const onSubmit = async (data: FormData) => {
         <Card>
           <CardHeader>
             <CardTitle>Journal & Section</CardTitle>
-            <CardDescription>Select where you want to submit your manuscript</CardDescription>
+            <CardDescription>
+              Select where you want to submit your manuscript
+            </CardDescription>
           </CardHeader>
           <div className="space-y-4">
             <Select
               label="Journal"
               required
               placeholder="Select a journal"
-              options={journals.map((j) => ({ value: j.id, label: j.title }))}
+              options={journals.map((j) => ({
+                value: j.id.toString(),
+                label: j.title,
+              }))}
               error={errors.journal_id?.message}
-              {...register('journal_id', {
+              {...register("journal_id", {
                 onChange: (e) => setSelectedJournalId(e.target.value),
               })}
             />
             <Select
               label="Section"
               required
-              placeholder={selectedJournalId ? 'Select a section' : 'Select a journal first'}
+              placeholder={
+                selectedJournalId
+                  ? "Select a section"
+                  : "Select a journal first"
+              }
               disabled={!selectedJournalId || sections.length === 0}
-              options={sections.map((s) => ({ value: s.id, label: s.title }))}
+              options={sections.map((s) => ({
+                value: s.id.toString(),
+                label: s.title,
+              }))}
               error={errors.section_id?.message}
-              {...register('section_id')}
+              {...register("section_id")}
             />
           </div>
         </Card>
@@ -149,7 +223,9 @@ const onSubmit = async (data: FormData) => {
         <Card>
           <CardHeader>
             <CardTitle>Manuscript Details</CardTitle>
-            <CardDescription>Provide complete information about your manuscript</CardDescription>
+            <CardDescription>
+              Provide complete information about your manuscript
+            </CardDescription>
           </CardHeader>
           <div className="space-y-4">
             <Input
@@ -157,7 +233,7 @@ const onSubmit = async (data: FormData) => {
               placeholder="Enter the full title of your manuscript"
               required
               error={errors.title?.message}
-              {...register('title')}
+              {...register("title")}
             />
             <div>
               <Textarea
@@ -167,7 +243,7 @@ const onSubmit = async (data: FormData) => {
                 rows={6}
                 error={errors.abstract?.message}
                 hint={`${abstractValue.length} characters`}
-                {...register('abstract')}
+                {...register("abstract")}
               />
             </div>
             <Input
@@ -176,14 +252,14 @@ const onSubmit = async (data: FormData) => {
               required
               error={errors.keywords?.message}
               hint="Separate keywords with commas"
-              {...register('keywords')}
+              {...register("keywords")}
             />
             <Textarea
               label="Cover Letter"
               placeholder="Write a brief cover letter to the editor (optional)"
               rows={4}
               error={errors.cover_letter?.message}
-              {...register('cover_letter')}
+              {...register("cover_letter")}
             />
           </div>
         </Card>
@@ -192,7 +268,9 @@ const onSubmit = async (data: FormData) => {
         <Card>
           <CardHeader>
             <CardTitle>Manuscript File</CardTitle>
-            <CardDescription>Upload your manuscript in PDF or Word format (max 10MB)</CardDescription>
+            <CardDescription>
+              Upload your manuscript in PDF or Word format (max 10MB)
+            </CardDescription>
           </CardHeader>
 
           {!file ? (
@@ -202,20 +280,22 @@ const onSubmit = async (data: FormData) => {
                 <p className="text-sm font-medium text-gray-600">
                   Click to upload or drag and drop
                 </p>
-                <p className="text-xs text-gray-400 mt-1">PDF, DOC, DOCX up to 10MB</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  PDF, DOC, DOCX up to 10MB
+                </p>
               </div>
               <input
                 type="file"
                 className="hidden"
                 accept=".pdf,.doc,.docx"
                 onChange={(e) => {
-                  const selected = e.target.files?.[0]
+                  const selected = e.target.files?.[0];
                   if (selected) {
                     if (selected.size > 10 * 1024 * 1024) {
-                      toast.error('File size must not exceed 10MB')
-                      return
+                      toast.error("File size must not exceed 10MB");
+                      return;
                     }
-                    setFile(selected)
+                    setFile(selected);
                   }
                 }}
               />
@@ -226,7 +306,9 @@ const onSubmit = async (data: FormData) => {
                 <FileText size={20} className="text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {file.name}
+                </p>
                 <p className="text-xs text-gray-500">
                   {(file.size / 1024 / 1024).toFixed(2)} MB
                 </p>
@@ -247,7 +329,7 @@ const onSubmit = async (data: FormData) => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate('/submissions')}
+            onClick={() => navigate("/submissions")}
           >
             Cancel
           </Button>
@@ -257,5 +339,5 @@ const onSubmit = async (data: FormData) => {
         </div>
       </form>
     </div>
-  )
+  );
 }

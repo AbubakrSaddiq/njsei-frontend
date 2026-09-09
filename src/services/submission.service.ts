@@ -59,10 +59,9 @@ export const submissionService = {
   },
 
   async downloadFile(submissionId: number, fileId: number): Promise<Blob> {
-  const { data } = await api.get(`/submissions/${submissionId}/files/${fileId}/download`, {
-    responseType: 'blob',
-  })
-  return data
+    const { data } = await api.get(`/submissions/${submissionId}/files/${fileId}/download`, {
+      responseType: 'blob',
+    })
+    return data
   },
-  
 }

@@ -11,8 +11,10 @@ import {
   XCircle,
   RotateCcw,
   Upload,
-  Calendar,
   Globe,
+  BookOpen,
+  Plus,
+  Clock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { submissionService } from "@/services/submission.service";
@@ -22,34 +24,59 @@ import { Card } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
 import type { Submission, SubmissionStatus } from "@/types";
 import api from "@/services/api";
+import { issueService } from "@/services/issue.service";
 
 const statusFilters: { label: string; value: SubmissionStatus | "all" }[] = [
   { label: "All", value: "all" },
   { label: "Submitted", value: "submitted" },
-  // { label: "Editorial Review", value: "editorial_review" },
   { label: "Under Review", value: "under_review" },
   { label: "Revision Required", value: "revision_required" },
   { label: "Accepted", value: "accepted" },
-  // { label: "Editing", value: "editing" },
-  // { label: "Production", value: "production" },
-  // { label: "Scheduled", value: "scheduled" },
   { label: "Published", value: "published" },
   { label: "Rejected", value: "rejected" },
 ];
 
 export function EditorialPage() {
+  const queryClient = useQueryClient();
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<SubmissionStatus | "all">(
     "all",
   );
-  const queryClient = useQueryClient();
 
+  // ✅ All modal state declared up front
+  const [inviteModal, setInviteModal] = useState<{
+    open: boolean;
+    submissionId: number | null;
+  }>({ open: false, submissionId: null });
+  const [reviewerEmail, setReviewerEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
+
+  const [scheduleModal, setScheduleModal] = useState<{
+    open: boolean;
+    submissionId: number | null;
+    journalId: number | null;
+  }>({ open: false, submissionId: null, journalId: null });
+  const [selectedIssueId, setSelectedIssueId] = useState<string>("");
+  const [newIssue, setNewIssue] = useState({ volume: 1, issue_number: 1 });
+  const [showCreateInline, setShowCreateInline] = useState(false);
+
+  // ---- Queries ----
   const { data, isLoading } = useQuery({
     queryKey: ["editorial-submissions"],
     queryFn: submissionService.getAll,
   });
 
+  const { data: issuesData } = useQuery({
+    queryKey: ["issues", scheduleModal.journalId],
+    queryFn: () => issueService.getIssues(scheduleModal.journalId!),
+    enabled: scheduleModal.open && !!scheduleModal.journalId,
+  });
+
   const submissions: Submission[] = data?.data ?? [];
+  const openIssues = (issuesData?.issues ?? []).filter(
+    (i: any) => !i.is_published,
+  );
 
   const filtered = submissions.filter((s) => {
     const matchesSearch =
@@ -59,6 +86,7 @@ export function EditorialPage() {
     return matchesSearch && matchesStatus;
   });
 
+  // ---- Mutations ----
   const sendToReviewMutation = useMutation({
     mutationFn: (id: number) => submissionService.sendToReview(id),
     onSuccess: () => {
@@ -96,12 +124,40 @@ export function EditorialPage() {
   });
 
   const scheduleMutation = useMutation({
-    mutationFn: (id: number) => submissionService.schedule(id),
+    mutationFn: () =>
+      submissionService.schedule(
+        scheduleModal.submissionId!,
+        Number(selectedIssueId),
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["editorial-submissions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["issues", scheduleModal.journalId],
+      });
       toast.success("Submission scheduled");
+      setScheduleModal({ open: false, submissionId: null, journalId: null });
+      setSelectedIssueId("");
+      setShowCreateInline(false);
     },
-    onError: () => toast.error("Failed to schedule submission"),
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message ?? "Failed to schedule");
+    },
+  });
+
+  const createIssueMutation = useMutation({
+    mutationFn: () =>
+      issueService.createIssue(scheduleModal.journalId!, newIssue),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({
+        queryKey: ["issues", scheduleModal.journalId],
+      });
+      toast.success("Issue created");
+      setSelectedIssueId(String(data.issue.id));
+      setShowCreateInline(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message ?? "Failed to create issue");
+    },
   });
 
   const publishMutation = useMutation({
@@ -132,19 +188,11 @@ export function EditorialPage() {
     onError: () => toast.error("Failed to request revision"),
   });
 
-  const [inviteModal, setInviteModal] = useState<{
-    open: boolean;
-    submissionId: number | null;
-  }>({ open: false, submissionId: null });
-
-  const [reviewerEmail, setReviewerEmail] = useState("");
-  const [inviting, setInviting] = useState(false);
-
+  // ---- Handlers ----
   const handleInviteReviewer = async () => {
     if (!reviewerEmail || !inviteModal.submissionId) return;
     setInviting(true);
     try {
-      // Find user by email then invite
       await api.post(
         `/submissions/${inviteModal.submissionId}/invite-reviewer`,
         { email: reviewerEmail },
@@ -161,6 +209,15 @@ export function EditorialPage() {
     }
   };
 
+  const handleSchedule = () => {
+    if (!selectedIssueId) {
+      toast.error("Please select an issue first");
+      return;
+    }
+    scheduleMutation.mutate();
+  };
+
+  // ---- Render ----
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -294,7 +351,7 @@ export function EditorialPage() {
                   </div>
                 </div>
 
-                {/* Actions  */}
+                {/* Actions */}
                 <div className="flex items-center gap-2 flex-wrap">
                   {submission.status === "submitted" ||
                   submission.status === "editorial_review" ? (
@@ -392,7 +449,7 @@ export function EditorialPage() {
                     </>
                   ) : null}
 
-                  {/*  Editing → Production */}
+                  {/* Editing → Production */}
                   {submission.status === "editing" ? (
                     <Button
                       size="sm"
@@ -410,10 +467,15 @@ export function EditorialPage() {
                   {submission.status === "production" ? (
                     <Button
                       size="sm"
-                      onClick={() => scheduleMutation.mutate(submission.id)}
-                      loading={scheduleMutation.isPending}
+                      onClick={() =>
+                        setScheduleModal({
+                          open: true,
+                          submissionId: submission.id,
+                          journalId: submission.journal.id,
+                        })
+                      }
                     >
-                      <Calendar size={13} />
+                      <Clock size={13} />
                       Schedule
                     </Button>
                   ) : null}
@@ -429,6 +491,7 @@ export function EditorialPage() {
                       Publish
                     </Button>
                   ) : null}
+
                   <div>
                     <Link to={`/submissions/${submission.id}`}>
                       <Button size="sm" variant="ghost">
@@ -441,50 +504,201 @@ export function EditorialPage() {
               </div>
             </Card>
           ))}
-          {/* Invite Reviewer Modal */}
-          {inviteModal.open && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div
-                className="absolute inset-0 bg-black/50"
+        </div>
+      )}
+
+      {/* Invite Reviewer Modal */}
+      {inviteModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setInviteModal({ open: false, submissionId: null })}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-lg font-bold text-gray-900 font-serif mb-2">
+              Invite Reviewer
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Enter the email address of the reviewer you want to invite.
+            </p>
+            <input
+              type="email"
+              placeholder="reviewer@institution.edu"
+              value={reviewerEmail}
+              onChange={(e) => setReviewerEmail(e.target.value)}
+              className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary mb-4"
+            />
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                fullWidth
                 onClick={() =>
                   setInviteModal({ open: false, submissionId: null })
                 }
-              />
-              <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-                <h3 className="text-lg font-bold text-gray-900 font-serif mb-2">
-                  Invite Reviewer
-                </h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  Enter the email address of the reviewer you want to invite.
+              >
+                Cancel
+              </Button>
+              <Button
+                fullWidth
+                loading={inviting}
+                onClick={handleInviteReviewer}
+              >
+                Send Invitation
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Modal */}
+      {scheduleModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() =>
+              setScheduleModal({
+                open: false,
+                submissionId: null,
+                journalId: null,
+              })
+            }
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-lg font-bold text-gray-900 font-serif mb-1">
+              Schedule for Publication
+            </h3>
+            <p className="text-sm text-gray-500 mb-5">
+              Select an issue to add this manuscript to.
+            </p>
+
+            {openIssues.length === 0 && !showCreateInline ? (
+              <div className="text-center py-6">
+                <BookOpen size={28} className="text-gray-200 mx-auto mb-3" />
+                <p className="text-sm text-gray-500">
+                  No unpublished issues yet.
                 </p>
-                <input
-                  type="email"
-                  placeholder="reviewer@institution.edu"
-                  value={reviewerEmail}
-                  onChange={(e) => setReviewerEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary mb-4"
-                />
-                <div className="flex gap-3">
+                <Button
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => setShowCreateInline(true)}
+                >
+                  <Plus size={14} />
+                  Create Issue
+                </Button>
+              </div>
+            ) : showCreateInline ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Volume
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={newIssue.volume}
+                      onChange={(e) =>
+                        setNewIssue((p) => ({
+                          ...p,
+                          volume: Number(e.target.value),
+                        }))
+                      }
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Issue
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={newIssue.issue_number}
+                      onChange={(e) =>
+                        setNewIssue((p) => ({
+                          ...p,
+                          issue_number: Number(e.target.value),
+                        }))
+                      }
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
                   <Button
+                    size="sm"
                     variant="outline"
                     fullWidth
-                    onClick={() =>
-                      setInviteModal({ open: false, submissionId: null })
-                    }
+                    onClick={() => setShowCreateInline(false)}
                   >
-                    Cancel
+                    Back
                   </Button>
                   <Button
+                    size="sm"
                     fullWidth
-                    loading={inviting}
-                    onClick={handleInviteReviewer}
+                    loading={createIssueMutation.isPending}
+                    onClick={() => createIssueMutation.mutate()}
                   >
-                    Send Invitation
+                    Create
                   </Button>
                 </div>
               </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1.5">
+                    Issue <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={selectedIssueId}
+                    onChange={(e) => setSelectedIssueId(e.target.value)}
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">Select an issue...</option>
+                    {openIssues.map((i: any) => (
+                      <option key={i.id} value={i.id}>
+                        {i.label} ({i.submissions_count} article
+                        {i.submissions_count !== 1 ? "s" : ""})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateInline(true)}
+                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                  <Plus size={12} /> Create new issue instead
+                </button>
+              </div>
+            )}
+
+            <div className="flex gap-3 mt-6">
+              <Button
+                variant="outline"
+                fullWidth
+                onClick={() =>
+                  setScheduleModal({
+                    open: false,
+                    submissionId: null,
+                    journalId: null,
+                  })
+                }
+              >
+                Cancel
+              </Button>
+              {!showCreateInline && openIssues.length > 0 && (
+                <Button
+                  fullWidth
+                  loading={scheduleMutation.isPending}
+                  disabled={!selectedIssueId}
+                  onClick={handleSchedule}
+                >
+                  Schedule
+                </Button>
+              )}
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>

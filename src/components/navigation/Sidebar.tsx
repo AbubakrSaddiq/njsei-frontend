@@ -79,7 +79,7 @@ const navItems: NavItem[] = [
   {
     label: "Journal Management",
     to: "/admin/journals",
-    icon: <Settings size={18} />,
+    icon: <BookOpen size={18} />,
     roles: ["admin", "editor", "managing_editor"],
   },
   {

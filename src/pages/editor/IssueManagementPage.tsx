@@ -9,6 +9,7 @@ import {
   Send,
   CheckCircle,
   FileText,
+  AlertTriangle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Card } from "@/components/ui/Card";
@@ -32,6 +33,12 @@ export function IssueManagementPage() {
     submission_id: "",
     page_number: "",
   });
+  const [publishConfirm, setPublishConfirm] = useState<{
+    open: boolean;
+    issueId: number | null;
+    issueLabel: string;
+    articleCount: number;
+  }>({ open: false, issueId: null, issueLabel: "", articleCount: 0 });
 
   // Fetch journals
   const { data: journalsData } = useQuery({
@@ -58,8 +65,8 @@ export function IssueManagementPage() {
     queryFn: submissionService.getAll,
   });
 
-  const acceptedSubmissions = (submissionsData?.data ?? []).filter(
-    (s: any) => s.status === "accepted",
+  const schedulableSubmissions = (submissionsData?.data ?? []).filter(
+    (s: any) => s.status === "production" || s.status === "accepted",
   );
 
   // Mutations
@@ -119,10 +126,22 @@ export function IssueManagementPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["issues", activeJournalId] });
       queryClient.invalidateQueries({ queryKey: ["submissions"] });
-      toast.success("Issue published successfully! 🎉");
+      toast.success("Issue published successfully!");
+      setPublishConfirm({
+        open: false,
+        issueId: null,
+        issueLabel: "",
+        articleCount: 0,
+      });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message ?? "Failed to publish issue");
+      setPublishConfirm({
+        open: false,
+        issueId: null,
+        issueLabel: "",
+        articleCount: 0,
+      });
     },
   });
 
@@ -274,13 +293,12 @@ export function IssueManagementPage() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (
-                            confirm(
-                              `Publish ${issue.label}? This cannot be undone.`,
-                            )
-                          ) {
-                            publishIssueMutation.mutate(issue.id);
-                          }
+                          setPublishConfirm({
+                            open: true,
+                            issueId: issue.id,
+                            issueLabel: issue.label,
+                            articleCount: issue.submissions_count,
+                          });
                         }}
                         loading={publishIssueMutation.isPending}
                       >
@@ -407,7 +425,7 @@ export function IssueManagementPage() {
               Add an accepted manuscript to this issue for publication.
             </p>
 
-            {acceptedSubmissions.length === 0 ? (
+            {schedulableSubmissions.length === 0 ? (
               <div className="text-center py-6">
                 <CheckCircle size={32} className="text-gray-200 mx-auto mb-3" />
                 <p className="text-sm text-gray-500">
@@ -434,7 +452,7 @@ export function IssueManagementPage() {
                     className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="">Select a manuscript...</option>
-                    {acceptedSubmissions.map((s: any) => (
+                    {schedulableSubmissions.map((s: any) => (
                       <option key={s.id} value={s.id}>
                         {s.title} — {s.author?.name}
                       </option>
@@ -472,7 +490,7 @@ export function IssueManagementPage() {
               >
                 Cancel
               </Button>
-              {acceptedSubmissions.length > 0 && (
+              {schedulableSubmissions.length > 0 && (
                 <Button
                   fullWidth
                   loading={scheduleSubmissionMutation.isPending}
@@ -484,6 +502,78 @@ export function IssueManagementPage() {
                   Schedule Article
                 </Button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Publish Confirmation Modal */}
+      {publishConfirm.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() =>
+              setPublishConfirm({
+                open: false,
+                issueId: null,
+                issueLabel: "",
+                articleCount: 0,
+              })
+            }
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={20} className="text-yellow-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 font-serif">
+                  Publish Issue?
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-gray-50 rounded-lg mb-5">
+              <p className="text-sm font-semibold text-gray-900">
+                {publishConfirm.issueLabel}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {publishConfirm.articleCount} article
+                {publishConfirm.articleCount !== 1 ? "s" : ""} will be published
+                and become publicly available.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                fullWidth
+                onClick={() =>
+                  setPublishConfirm({
+                    open: false,
+                    issueId: null,
+                    issueLabel: "",
+                    articleCount: 0,
+                  })
+                }
+              >
+                Cancel
+              </Button>
+              <Button
+                fullWidth
+                loading={publishIssueMutation.isPending}
+                onClick={() => {
+                  if (publishConfirm.issueId) {
+                    publishIssueMutation.mutate(publishConfirm.issueId);
+                  }
+                }}
+              >
+                <Send size={14} />
+                Publish Issue
+              </Button>
             </div>
           </div>
         </div>

@@ -68,7 +68,7 @@ export const submissionService = {
     issue_id: issueId,
   })
   return data
-  },
+},
 
   async publish(id: number): Promise<any> {
     const { data } = await api.post(`/submissions/${id}/publish`)

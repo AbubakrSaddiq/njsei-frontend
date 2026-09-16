@@ -10,6 +10,9 @@ import {
   CheckCircle,
   XCircle,
   RotateCcw,
+  Upload,
+  Calendar,
+  Globe,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { submissionService } from "@/services/submission.service";
@@ -23,10 +26,14 @@ import api from "@/services/api";
 const statusFilters: { label: string; value: SubmissionStatus | "all" }[] = [
   { label: "All", value: "all" },
   { label: "Submitted", value: "submitted" },
-  { label: "Editorial Review", value: "editorial_review" },
+  // { label: "Editorial Review", value: "editorial_review" },
   { label: "Under Review", value: "under_review" },
   { label: "Revision Required", value: "revision_required" },
   { label: "Accepted", value: "accepted" },
+  // { label: "Editing", value: "editing" },
+  // { label: "Production", value: "production" },
+  // { label: "Scheduled", value: "scheduled" },
+  { label: "Published", value: "published" },
   { label: "Rejected", value: "rejected" },
 ];
 
@@ -70,6 +77,42 @@ export function EditorialPage() {
     onError: () => toast.error("Failed to accept submission"),
   });
 
+  const sendToEditingMutation = useMutation({
+    mutationFn: (id: number) => submissionService.sendToEditing(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["editorial-submissions"] });
+      toast.success("Sent to editing");
+    },
+    onError: () => toast.error("Failed to send to editing"),
+  });
+
+  const sendToProductionMutation = useMutation({
+    mutationFn: (id: number) => submissionService.sendToProduction(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["editorial-submissions"] });
+      toast.success("Sent to production");
+    },
+    onError: () => toast.error("Failed to send to production"),
+  });
+
+  const scheduleMutation = useMutation({
+    mutationFn: (id: number) => submissionService.schedule(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["editorial-submissions"] });
+      toast.success("Submission scheduled");
+    },
+    onError: () => toast.error("Failed to schedule submission"),
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: (id: number) => submissionService.publish(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["editorial-submissions"] });
+      toast.success("Submission published");
+    },
+    onError: () => toast.error("Failed to publish submission"),
+  });
+
   const rejectMutation = useMutation({
     mutationFn: (id: number) =>
       submissionService.reject(id, "Does not meet journal standards"),
@@ -93,6 +136,7 @@ export function EditorialPage() {
     open: boolean;
     submissionId: number | null;
   }>({ open: false, submissionId: null });
+
   const [reviewerEmail, setReviewerEmail] = useState("");
   const [inviting, setInviting] = useState(false);
 
@@ -241,6 +285,12 @@ export function EditorialPage() {
                     <span className="text-xs text-gray-500">
                       📂 {submission.section?.title}
                     </span>
+                    {submission.status === "under_review" && (
+                      <span className="text-xs text-gray-500">
+                        📝 {submission.review_invitations_completed_count ?? 0}/
+                        {submission.review_invitations_count ?? 0} reviews
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -316,6 +366,68 @@ export function EditorialPage() {
                         Reject
                       </Button>
                     </>
+                  ) : null}
+
+                  {submission.status === "accepted" ? (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          sendToEditingMutation.mutate(submission.id)
+                        }
+                        loading={sendToEditingMutation.isPending}
+                      >
+                        <CheckCircle size={13} />
+                        Send to Editing
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => rejectMutation.mutate(submission.id)}
+                        loading={rejectMutation.isPending}
+                      >
+                        <XCircle size={13} />
+                        Reject
+                      </Button>
+                    </>
+                  ) : null}
+
+                  {/*  Editing → Production */}
+                  {submission.status === "editing" ? (
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        sendToProductionMutation.mutate(submission.id)
+                      }
+                      loading={sendToProductionMutation.isPending}
+                    >
+                      <Upload size={13} />
+                      Send to Production
+                    </Button>
+                  ) : null}
+
+                  {/* Production → Scheduled */}
+                  {submission.status === "production" ? (
+                    <Button
+                      size="sm"
+                      onClick={() => scheduleMutation.mutate(submission.id)}
+                      loading={scheduleMutation.isPending}
+                    >
+                      <Calendar size={13} />
+                      Schedule
+                    </Button>
+                  ) : null}
+
+                  {/* Scheduled → Published */}
+                  {submission.status === "scheduled" ? (
+                    <Button
+                      size="sm"
+                      onClick={() => publishMutation.mutate(submission.id)}
+                      loading={publishMutation.isPending}
+                    >
+                      <Globe size={13} />
+                      Publish
+                    </Button>
                   ) : null}
                   <div>
                     <Link to={`/submissions/${submission.id}`}>

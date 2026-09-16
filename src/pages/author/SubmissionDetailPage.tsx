@@ -37,12 +37,16 @@ export function SubmissionDetailPage() {
     queryKey: ["submission", id],
     queryFn: () => submissionService.getOne(Number(id)),
     enabled: !!id,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: versionsData } = useQuery({
     queryKey: ["submission-versions", id],
     queryFn: () => submissionService.getVersions(Number(id)),
     enabled: !!id,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
   });
 
   const submission = data?.data;

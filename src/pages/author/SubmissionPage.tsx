@@ -1,34 +1,37 @@
-import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
-import { Plus, FileText, Search } from 'lucide-react'
-import { useState } from 'react'
-import { submissionService } from '@/services/submission.service'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
-import type { Submission } from '@/types'
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { Plus, FileText, Search } from "lucide-react";
+import { useState } from "react";
+import { submissionService } from "@/services/submission.service";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Spinner } from "@/components/ui/Spinner";
+import type { Submission } from "@/types";
 
 export function SubmissionsPage() {
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState("");
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['submissions'],
+    queryKey: ["submissions"],
     queryFn: submissionService.getAll,
-  })
+    refetchInterval: 30000,
+  });
 
-  const submissions: Submission[] = data?.data ?? []
+  const submissions: Submission[] = data?.data ?? [];
 
   const filtered = submissions.filter((s) =>
-    s.title.toLowerCase().includes(search.toLowerCase())
-  )
+    s.title.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 font-serif">My Submissions</h2>
+          <h2 className="text-2xl font-bold text-gray-900 font-serif">
+            My Submissions
+          </h2>
           <p className="text-sm text-gray-500 mt-1">
             Track and manage your manuscript submissions
           </p>
@@ -43,7 +46,10 @@ export function SubmissionsPage() {
 
       {/* Search */}
       <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+        />
         <input
           type="text"
           placeholder="Search submissions..."
@@ -60,7 +66,9 @@ export function SubmissionsPage() {
         </div>
       ) : error ? (
         <Card>
-          <p className="text-center text-red-500 py-8">Failed to load submissions.</p>
+          <p className="text-center text-red-500 py-8">
+            Failed to load submissions.
+          </p>
         </Card>
       ) : filtered.length === 0 ? (
         <Card>
@@ -69,12 +77,12 @@ export function SubmissionsPage() {
               <FileText size={28} className="text-primary" />
             </div>
             <h3 className="font-semibold text-gray-900 font-serif text-lg">
-              {search ? 'No results found' : 'No submissions yet'}
+              {search ? "No results found" : "No submissions yet"}
             </h3>
             <p className="text-gray-500 text-sm mt-2 max-w-sm mx-auto">
               {search
-                ? 'Try adjusting your search terms'
-                : 'Submit your first manuscript to get started with the review process.'}
+                ? "Try adjusting your search terms"
+                : "Submit your first manuscript to get started with the review process."}
             </p>
             {!search && (
               <Link to="/submissions/new" className="inline-block mt-6">
@@ -110,11 +118,15 @@ export function SubmissionsPage() {
                         📂 {submission.section?.title}
                       </span>
                       <span className="text-xs text-gray-400">
-                        🗓 {new Date(submission.submitted_at).toLocaleDateString('en-NG', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
+                        🗓{" "}
+                        {new Date(submission.submitted_at).toLocaleDateString(
+                          "en-NG",
+                          {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          },
+                        )}
                       </span>
                     </div>
                   </div>
@@ -126,5 +138,5 @@ export function SubmissionsPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

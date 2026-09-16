@@ -53,6 +53,27 @@ export const submissionService = {
     return data
   },
 
+  async sendToEditing(id:number): Promise<any> {
+  const { data } = await api.post(`/submissions/${id}/send-to-editing`)
+  return data
+  },
+
+  async sendToProduction(id: number): Promise<any> {
+  const { data } = await api.post(`/submissions/${id}/send-to-production`)
+  return data
+  },
+
+ async schedule(id: number, issueId: number): Promise<any> {
+  const { data } = await api.post(`/submissions/${id}/schedule`, {
+    issue_id: issueId,
+  })
+  return data
+  },
+
+  async publish(id: number): Promise<any> {
+    const { data } = await api.post(`/submissions/${id}/publish`)
+    return data
+  },
   async reject(id: number, reason: string): Promise<any> {
     const { data } = await api.post(`/submissions/${id}/reject`, { reason })
     return data

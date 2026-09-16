@@ -77,6 +77,17 @@ export interface Submission {
   author: User
   submitted_at: string
   current_version?: SubmissionVersion
+  reviews_count?: number
+  review_invitations_count?: number
+  review_invitations_completed_count?: number
+   issue?: {
+    id: number
+    volume: number
+    issue_number: number
+    label: string
+    published_at: string | null
+    is_published: boolean
+  }
 }
 
 export interface SubmissionVersion {

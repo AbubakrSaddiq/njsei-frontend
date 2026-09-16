@@ -23,6 +23,11 @@ function NotificationIcon({ type }: { type: string }) {
     ReviewerInvited: <BookOpen size={14} className="text-purple-500" />,
     EditorialDecisionMade: <CheckCircle size={14} className="text-green-500" />,
     RevisionRequested: <FileText size={14} className="text-orange-500" />,
+    ReviewSubmitted: <CheckCircle size={14} className="text-green-600" />,
+    ReviewInvitationResponded: (
+      <BookOpen size={14} className="text-indigo-500" />
+    ),
+    SubmissionStatusChanged: <FileText size={14} className="text-blue-600" />,
   };
   return (
     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
@@ -42,6 +47,16 @@ function getNotificationMessage(notification: AppNotification): string {
       return `Decision on "${data.title}": ${data.decision?.replace("_", " ")}.`;
     case "RevisionRequested":
       return `${data.revision_type} revision requested for "${data.title}".`;
+
+    case "ReviewSubmitted":
+      return `A review was submitted for "${data.title}" (${data.recommendation?.replace(/_/g, " ")}).`;
+    case "ReviewInvitationResponded":
+      return `${data.reviewer_name} ${data.response} your review invitation.`;
+    case "SubmissionStatusChanged":
+      return (
+        data.message ??
+        `Your manuscript is now in ${data.label ?? "a new stage"}; `
+      );
     default:
       return data.message ?? "You have a new notification.";
   }
@@ -53,6 +68,9 @@ function getNotificationLink(notification: AppNotification): string {
     case "SubmissionReceived":
     case "EditorialDecisionMade":
     case "RevisionRequested":
+    case "ReviewSubmitted":
+    case "ReviewInvitationResponded":
+    case "SubmissionStatusChanged":
       return data.submission_id
         ? `/submissions/${data.submission_id}`
         : "/submissions";

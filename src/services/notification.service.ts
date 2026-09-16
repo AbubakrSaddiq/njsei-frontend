@@ -12,6 +12,12 @@ export interface AppNotification {
     reviewer_id?: number
     reviewer_name?: string
     invitation_id?: number
+    review_id?: number
+    recommendation?: string
+    response?: string
+    status?: string;
+    label?: string;
+
   }
   read_at: string | null
   created_at: string

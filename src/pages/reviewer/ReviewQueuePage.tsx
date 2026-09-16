@@ -166,111 +166,87 @@ export function ReviewQueuePage() {
               key={invitation.id}
               className="hover:border-primary/30 transition-all"
             >
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2 flex-wrap">
-                    <span
-                      className={`
+              {/* ✅ Stack vertically on mobile, side-by-side on larger screens */}
+              <div className="flex flex-col gap-4">
+                {/* Header: status + invited date */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span
+                    className={`
                       inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                       ${invitation.status === "pending" ? "bg-yellow-100 text-yellow-700" : ""}
                       ${invitation.status === "accepted" ? "bg-green-100 text-green-700" : ""}
                       ${invitation.status === "declined" ? "bg-red-100 text-red-700" : ""}
                       ${invitation.status === "completed" ? "bg-blue-100 text-blue-700" : ""}
                     `}
-                    >
-                      {invitation.status === "pending" && (
-                        <Clock size={10} className="mr-1" />
-                      )}
-                      {invitation.status === "accepted" && (
-                        <CheckCircle size={10} className="mr-1" />
-                      )}
-                      {invitation.status === "declined" && (
-                        <XCircle size={10} className="mr-1" />
-                      )}
-                      {invitation.status.charAt(0).toUpperCase() +
-                        invitation.status.slice(1)}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      Invited{" "}
-                      {new Date(invitation.invited_at).toLocaleDateString(
-                        "en-NG",
-                        {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        },
-                      )}
-                    </span>
-                  </div>
+                  >
+                    {invitation.status === "pending" && (
+                      <Clock size={10} className="mr-1" />
+                    )}
+                    {invitation.status === "accepted" && (
+                      <CheckCircle size={10} className="mr-1" />
+                    )}
+                    {invitation.status === "declined" && (
+                      <XCircle size={10} className="mr-1" />
+                    )}
+                    {invitation.status.charAt(0).toUpperCase() +
+                      invitation.status.slice(1)}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    Invited{" "}
+                    {new Date(invitation.invited_at).toLocaleDateString(
+                      "en-NG",
+                      {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      },
+                    )}
+                  </span>
+                </div>
 
-                  <h3 className="font-semibold text-gray-900 text-sm leading-snug">
+                {/* Title + metadata */}
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-900 text-sm leading-snug break-words">
                     {invitation.submission?.title}
                   </h3>
                   <div className="flex items-center gap-3 mt-2 flex-wrap">
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 truncate">
                       📔 {invitation.submission?.journal}
                     </span>
+                    {invitation.submission?.section && (
+                      <span className="text-xs text-gray-400 truncate">
+                        · {invitation.submission.section}
+                      </span>
+                    )}
                     {invitation.review?.recommendation && (
                       <Badge status={invitation.review.recommendation} />
                     )}
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {invitation.status === "pending" && (
-                    <>
-                      <Button
-                        size="sm"
-                        onClick={() => acceptMutation.mutate(invitation.id)}
-                        loading={acceptMutation.isPending}
-                      >
-                        <CheckCircle size={13} />
-                        Accept
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => declineMutation.mutate(invitation.id)}
-                        loading={declineMutation.isPending}
-                      >
-                        <XCircle size={13} />
-                        Decline
-                      </Button>
-                    </>
-                  )}
-
-                  {invitation.status === "accepted" && !invitation.review && (
-                    <>
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          setReviewModal({
-                            open: true,
-                            invitationId: invitation.id,
-                          })
-                        }
-                      >
-                        <BookOpen size={13} />
-                        Submit Review
-                      </Button>
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <p className="text-xs text-gray-500 mb-2 font-medium">
-                          Manuscript Files:
-                        </p>
-                        {invitation.submission?.current_version?.files?.map(
+                {/* ✅ Manuscript files — full-width block, stacks nicely on mobile */}
+                {invitation.status === "accepted" && (
+                  <div className="border-t border-gray-100 pt-3">
+                    <p className="text-xs text-gray-500 mb-2 font-medium">
+                      Manuscript Files
+                    </p>
+                    {invitation.submission?.current_version?.files?.length ? (
+                      <div className="space-y-2">
+                        {invitation.submission.current_version.files.map(
                           (file: any) => (
                             <div
                               key={file.id}
-                              className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
+                              className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 bg-gray-50 rounded-lg"
                             >
-                              <FileText
-                                size={14}
-                                className="text-primary flex-shrink-0"
-                              />
-                              <span className="text-xs text-gray-700 flex-1 truncate">
-                                {file.original_filename}
-                              </span>
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <FileText
+                                  size={16}
+                                  className="text-primary flex-shrink-0"
+                                />
+                                <span className="text-xs text-gray-700 truncate">
+                                  {file.original_filename}
+                                </span>
+                              </div>
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -282,6 +258,7 @@ export function ReviewQueuePage() {
                                     file.original_filename,
                                   )
                                 }
+                                className="w-full sm:w-auto flex-shrink-0"
                               >
                                 <Download size={12} />
                                 Download
@@ -290,13 +267,58 @@ export function ReviewQueuePage() {
                           ),
                         )}
                       </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic">
+                        No files attached to this submission.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* ✅ Actions — full width on mobile, right-aligned on larger screens */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pt-3 border-t border-gray-100">
+                  {invitation.status === "pending" && (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() => acceptMutation.mutate(invitation.id)}
+                        loading={acceptMutation.isPending}
+                        className="w-full sm:w-auto"
+                      >
+                        <CheckCircle size={13} />
+                        Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => declineMutation.mutate(invitation.id)}
+                        loading={declineMutation.isPending}
+                        className="w-full sm:w-auto"
+                      >
+                        <XCircle size={13} />
+                        Decline
+                      </Button>
                     </>
                   )}
 
-                  {/* Download manuscript */}
+                  {invitation.status === "accepted" && !invitation.review && (
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        setReviewModal({
+                          open: true,
+                          invitationId: invitation.id,
+                        })
+                      }
+                      className="w-full sm:w-auto"
+                    >
+                      <BookOpen size={13} />
+                      Submit Review
+                    </Button>
+                  )}
 
                   {invitation.status === "completed" && (
-                    <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                    <span className="text-xs text-green-600 font-medium flex items-center justify-center sm:justify-start gap-1">
                       <CheckCircle size={13} />
                       Review Submitted
                     </span>
@@ -315,7 +337,7 @@ export function ReviewQueuePage() {
             className="absolute inset-0 bg-black/50"
             onClick={() => setReviewModal({ open: false, invitationId: null })}
           />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold text-gray-900 font-serif mb-1">
               Submit Review
             </h3>
@@ -359,7 +381,7 @@ export function ReviewQueuePage() {
                 </label>
                 <p className="text-xs text-gray-500 mb-2">
                   These comments are confidential and only visible to the
-                  editor.
+                  editor. Must be atleast 10 characters.
                 </p>
                 <textarea
                   rows={4}
@@ -382,7 +404,8 @@ export function ReviewQueuePage() {
                   <span className="text-sm font-normal text-red-500">*</span>
                 </label>
                 <p className="text-xs text-gray-500 mb-2">
-                  These comments will be shared with the author.
+                  These comments will be shared with the author. Must be atleast
+                  10 characters.
                 </p>
                 <textarea
                   rows={4}
@@ -399,7 +422,7 @@ export function ReviewQueuePage() {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+            <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-gray-100">
               <Button
                 variant="outline"
                 fullWidth

@@ -60,7 +60,7 @@ const navItems: NavItem[] = [
     label: "User Management",
     to: "/admin/users",
     icon: <Users size={18} />,
-    roles: ["admin", "managing_editor"],
+    roles: ["admin", "managing_editor", "editor"],
   },
   {
     label: "Journal Settings",
@@ -68,21 +68,29 @@ const navItems: NavItem[] = [
     icon: <Settings size={18} />,
     roles: ["admin"],
   },
-  {
-    label: "Profile",
-    to: "/profile",
-    icon: <UserCircle size={18} />,
-  },
+
   {
     label: "Issue Management",
     to: "/issues",
     icon: <BookMarked size={18} />,
     roles: ["admin", "editor", "managing_editor"],
   },
+
+  {
+    label: "Journal Management",
+    to: "/admin/journals",
+    icon: <Settings size={18} />,
+    roles: ["admin", "editor", "managing_editor"],
+  },
   {
     label: "Search",
     to: "/search",
     icon: <Search size={18} />,
+  },
+  {
+    label: "Profile",
+    to: "/profile",
+    icon: <UserCircle size={18} />,
   },
 ];
 

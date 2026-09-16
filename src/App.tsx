@@ -22,6 +22,7 @@ import { ReviewQueuePage } from "@/pages/reviewer/ReviewQueuePage";
 import { UserManagementPage } from "@/pages/admin/UserManagementPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { SearchPage } from "@/pages/SearchPage";
+import { JournalManagementPage } from "./pages/editor/JournalManagementPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,6 +74,7 @@ export default function App() {
             <Route path="/admin/users" element={<UserManagementPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/search" element={<SearchPage />} />
+            <Route path="/admin/journals" element={<JournalManagementPage />} />
           </Route>
 
           {/* ===== FALLBACK ===== */}

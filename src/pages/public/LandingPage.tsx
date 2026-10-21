@@ -170,6 +170,75 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Journals Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 font-serif mb-2">
+              Our Journals
+            </h2>
+            <p className="text-gray-500">
+              Browse our collection of peer-reviewed journals
+            </p>
+          </div>
+          <Link
+            to="/journals"
+            className="hidden sm:flex items-center gap-1 text-primary text-sm font-medium hover:underline"
+          >
+            View all <ArrowRight size={14} />
+          </Link>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Spinner size="lg" />
+          </div>
+        ) : journals.length === 0 ? (
+          <Card>
+            <p className="text-center text-gray-500 py-8">
+              No journals published yet.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {journals.map((journal: any) => (
+              <Link key={journal.id} to={`/journals/${journal.slug}`}>
+                <Card className="hover:shadow-md hover:border-primary/20 transition-all cursor-pointer group h-full">
+                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mb-4">
+                    <BookOpen size={20} className="text-white" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 font-serif mb-1 group-hover:text-primary transition-colors">
+                    {journal.title}
+                  </h3>
+                  {journal.issn && (
+                    <p className="text-xs text-gray-400 mb-2">
+                      ISSN: {journal.issn}
+                    </p>
+                  )}
+                  {journal.description && (
+                    <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">
+                      {journal.description}
+                    </p>
+                  )}
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex flex-wrap gap-2">
+                      {journal.sections?.slice(0, 3).map((section: any) => (
+                        <span
+                          key={section.id}
+                          className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full"
+                        >
+                          {section.title}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* Stats */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-1">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
@@ -257,75 +326,6 @@ export function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Journals Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 font-serif mb-2">
-              Our Journals
-            </h2>
-            <p className="text-gray-500">
-              Browse our collection of peer-reviewed journals
-            </p>
-          </div>
-          <Link
-            to="/journals"
-            className="hidden sm:flex items-center gap-1 text-primary text-sm font-medium hover:underline"
-          >
-            View all <ArrowRight size={14} />
-          </Link>
-        </div>
-
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Spinner size="lg" />
-          </div>
-        ) : journals.length === 0 ? (
-          <Card>
-            <p className="text-center text-gray-500 py-8">
-              No journals published yet.
-            </p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {journals.map((journal: any) => (
-              <Link key={journal.id} to={`/journals/${journal.slug}`}>
-                <Card className="hover:shadow-md hover:border-primary/20 transition-all cursor-pointer group h-full">
-                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mb-4">
-                    <BookOpen size={20} className="text-white" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 font-serif mb-1 group-hover:text-primary transition-colors">
-                    {journal.title}
-                  </h3>
-                  {journal.issn && (
-                    <p className="text-xs text-gray-400 mb-2">
-                      ISSN: {journal.issn}
-                    </p>
-                  )}
-                  {journal.description && (
-                    <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">
-                      {journal.description}
-                    </p>
-                  )}
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <div className="flex flex-wrap gap-2">
-                      {journal.sections?.slice(0, 3).map((section: any) => (
-                        <span
-                          key={section.id}
-                          className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full"
-                        >
-                          {section.title}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
       </section>
 
       {/* CTA Section */}

@@ -57,6 +57,7 @@ export type SubmissionStatus =
   | 'submitted'
   | 'editorial_review'
   | 'under_review'
+  | 'under_second_review'
   | 'revision_required'
   | 'editor_revision_check'
   | 'accepted'
@@ -80,6 +81,18 @@ export interface Submission {
   reviews_count?: number
   review_invitations_count?: number
   review_invitations_completed_count?: number
+  reviews?: {
+  id: number
+  recommendation: Recommendation
+  comments_for_author: string
+  comments_for_editor: string | null
+  submitted_at: string
+  reviewer: {
+    id: number
+    name: string
+    affiliation?: string
+  } | null
+  }[]
    issue?: {
     id: number
     volume: number
@@ -107,7 +120,7 @@ export interface SubmissionFile {
 }
 
 // Review Types
-export type ReviewStatus = 'pending' | 'accepted' | 'declined' | 'completed'
+export type ReviewStatus = 'pending' | 'accepted' | 'declined' | 'completed' | 'second_review_pending'
 export type Recommendation =
   | 'accept'
   | 'minor_revision'
@@ -122,6 +135,8 @@ export interface ReviewInvitation {
   status: ReviewStatus
   invited_at: string
   responded_at?: string
+  is_second_review?: boolean
+  has_submitted_current_round?: boolean
   review?: Review
 }
 

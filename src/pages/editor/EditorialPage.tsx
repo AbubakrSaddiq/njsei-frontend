@@ -15,6 +15,10 @@ import {
   BookOpen,
   Plus,
   Clock,
+  Send,
+  ChevronDown,
+  X,
+  MessageSquare,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { submissionService } from "@/services/submission.service";
@@ -23,13 +27,16 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
 import type { Submission, SubmissionStatus } from "@/types";
-import api from "@/services/api";
+
 import { issueService } from "@/services/issue.service";
+import { RevisionUploadModal } from "@/components/ui/RevisionUploadModal";
+import { userService, type Reviewer } from "@/services/user.service";
 
 const statusFilters: { label: string; value: SubmissionStatus | "all" }[] = [
   { label: "All", value: "all" },
   { label: "Submitted", value: "submitted" },
   { label: "Under Review", value: "under_review" },
+  { label: "Second Review", value: "under_second_review" },
   { label: "Revision Required", value: "revision_required" },
   { label: "Accepted", value: "accepted" },
   { label: "Published", value: "published" },
@@ -44,13 +51,20 @@ export function EditorialPage() {
     "all",
   );
 
-  // ✅ All modal state declared up front
-  const [inviteModal, setInviteModal] = useState<{
+  // All modal state declared up front
+
+  const [editorUploadModal, setEditorUploadModal] = useState<{
+    open: boolean;
+    submissionId: number | null;
+    mode: "editor_revision" | "edited_manuscript";
+  }>({ open: false, submissionId: null, mode: "editor_revision" });
+  const [reviewModal, setReviewModal] = useState<{
     open: boolean;
     submissionId: number | null;
   }>({ open: false, submissionId: null });
-  const [reviewerEmail, setReviewerEmail] = useState("");
-  const [inviting, setInviting] = useState(false);
+  const [selectedReviewers, setSelectedReviewers] = useState<number[]>([]);
+  const [reviewerDropdownOpen, setReviewerDropdownOpen] = useState(false);
+  const [reviewerSearch, setReviewerSearch] = useState("");
 
   const [scheduleModal, setScheduleModal] = useState<{
     open: boolean;
@@ -73,6 +87,21 @@ export function EditorialPage() {
     enabled: scheduleModal.open && !!scheduleModal.journalId,
   });
 
+  const { data: reviewersData } = useQuery({
+    queryKey: ["reviewers"],
+    queryFn: userService.getReviewers,
+    enabled: reviewModal.open,
+  });
+
+  const reviewers: Reviewer[] = reviewersData?.reviewers ?? [];
+
+  const filteredReviewers = reviewers.filter((r) => {
+    const q = reviewerSearch.toLowerCase();
+    return (
+      r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q)
+    );
+  });
+
   const submissions: Submission[] = data?.data ?? [];
   const openIssues = (issuesData?.issues ?? []).filter(
     (i: any) => !i.is_published,
@@ -88,12 +117,21 @@ export function EditorialPage() {
 
   // ---- Mutations ----
   const sendToReviewMutation = useMutation({
-    mutationFn: (id: number) => submissionService.sendToReview(id),
+    mutationFn: () =>
+      submissionService.sendToReview(
+        reviewModal.submissionId!,
+        selectedReviewers,
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["editorial-submissions"] });
       toast.success("Submission sent to peer review");
+      setReviewModal({ open: false, submissionId: null });
+      setSelectedReviewers([]);
+      setReviewerSearch("");
     },
-    onError: () => toast.error("Failed to send to review"),
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message ?? "Failed to send to review");
+    },
   });
 
   const acceptMutation = useMutation({
@@ -114,13 +152,15 @@ export function EditorialPage() {
     onError: () => toast.error("Failed to send to editing"),
   });
 
-  const sendToProductionMutation = useMutation({
-    mutationFn: (id: number) => submissionService.sendToProduction(id),
+  const sendBackToReviewersMutation = useMutation({
+    mutationFn: (id: number) => submissionService.sendBackToReviewers(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["editorial-submissions"] });
-      toast.success("Sent to production");
+      toast.success("Sent back to reviewers");
     },
-    onError: () => toast.error("Failed to send to production"),
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message ?? "Failed to send back");
+    },
   });
 
   const scheduleMutation = useMutation({
@@ -189,25 +229,6 @@ export function EditorialPage() {
   });
 
   // ---- Handlers ----
-  const handleInviteReviewer = async () => {
-    if (!reviewerEmail || !inviteModal.submissionId) return;
-    setInviting(true);
-    try {
-      await api.post(
-        `/submissions/${inviteModal.submissionId}/invite-reviewer`,
-        { email: reviewerEmail },
-      );
-      toast.success("Reviewer invited successfully");
-      setInviteModal({ open: false, submissionId: null });
-      setReviewerEmail("");
-      queryClient.invalidateQueries({ queryKey: ["editorial-submissions"] });
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message ?? "Failed to invite reviewer");
-    } finally {
-      setInviting(false);
-    }
-  };
 
   const handleSchedule = () => {
     if (!selectedIssueId) {
@@ -360,9 +381,11 @@ export function EditorialPage() {
                         size="sm"
                         variant="outline"
                         onClick={() =>
-                          sendToReviewMutation.mutate(submission.id)
+                          setReviewModal({
+                            open: true,
+                            submissionId: submission.id,
+                          })
                         }
-                        loading={sendToReviewMutation.isPending}
                       >
                         <UserPlus size={13} />
                         Send to Review
@@ -379,29 +402,18 @@ export function EditorialPage() {
                     </>
                   ) : null}
 
-                  {submission.status === "under_review" ? (
+                  {submission.status === "under_review" ||
+                  submission.status === "under_second_review" ? (
                     <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          setInviteModal({
-                            open: true,
-                            submissionId: submission.id,
-                          })
-                        }
-                      >
-                        <UserPlus size={13} />
-                        Invite Reviewer
-                      </Button>
-                      <Button
+                      {/* Remove accept button, editor cant accept without reviewer reviewing */}
+                      {/* <Button
                         size="sm"
                         onClick={() => acceptMutation.mutate(submission.id)}
                         loading={acceptMutation.isPending}
                       >
                         <CheckCircle size={13} />
                         Accept
-                      </Button>
+                      </Button> */}
                       <Button
                         size="sm"
                         variant="outline"
@@ -425,6 +437,15 @@ export function EditorialPage() {
                     </>
                   ) : null}
 
+                  {submission.status === "revision_required" ? (
+                    <Link to={`/submissions/${submission.id}`}>
+                      <Button size="sm" variant="outline">
+                        <MessageSquare size={13} />
+                        View Comments
+                      </Button>
+                    </Link>
+                  ) : null}
+
                   {submission.status === "accepted" ? (
                     <>
                       <Button
@@ -440,6 +461,53 @@ export function EditorialPage() {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() =>
+                          setEditorUploadModal({
+                            open: true,
+                            submissionId: submission.id,
+                            mode: "editor_revision",
+                          })
+                        }
+                      >
+                        <Upload size={13} />
+                        Upload Revised
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => rejectMutation.mutate(submission.id)}
+                        loading={rejectMutation.isPending}
+                      >
+                        <XCircle size={13} />
+                        Reject
+                      </Button>
+                    </>
+                  ) : null}
+
+                  {submission.status === "editor_revision_check" ? (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() => acceptMutation.mutate(submission.id)}
+                        loading={acceptMutation.isPending}
+                      >
+                        <CheckCircle size={13} />
+                        Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          sendBackToReviewersMutation.mutate(submission.id)
+                        }
+                        loading={sendBackToReviewersMutation.isPending}
+                      >
+                        <Send size={13} />
+                        Send back to Reviewers
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
                         onClick={() => rejectMutation.mutate(submission.id)}
                         loading={rejectMutation.isPending}
                       >
@@ -454,12 +522,15 @@ export function EditorialPage() {
                     <Button
                       size="sm"
                       onClick={() =>
-                        sendToProductionMutation.mutate(submission.id)
+                        setEditorUploadModal({
+                          open: true,
+                          submissionId: submission.id,
+                          mode: "edited_manuscript",
+                        })
                       }
-                      loading={sendToProductionMutation.isPending}
                     >
                       <Upload size={13} />
-                      Send to Production
+                      Upload Edited & Send to Production
                     </Button>
                   ) : null}
 
@@ -495,7 +566,7 @@ export function EditorialPage() {
                   <div>
                     <Link to={`/submissions/${submission.id}`}>
                       <Button size="sm" variant="ghost">
-                        View
+                        More
                         <ChevronRight size={13} />
                       </Button>
                     </Link>
@@ -507,43 +578,164 @@ export function EditorialPage() {
         </div>
       )}
 
-      {/* Invite Reviewer Modal */}
-      {inviteModal.open && (
+      {/* Send to Review Modal */}
+      {reviewModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50"
-            onClick={() => setInviteModal({ open: false, submissionId: null })}
+            onClick={() => {
+              setReviewModal({ open: false, submissionId: null });
+              setSelectedReviewers([]);
+              setReviewerSearch("");
+              setReviewerDropdownOpen(false);
+            }}
           />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <h3 className="text-lg font-bold text-gray-900 font-serif mb-2">
-              Invite Reviewer
+            <h3 className="text-lg font-bold text-gray-900 font-serif mb-1">
+              Send to Peer Review
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
-              Enter the email address of the reviewer you want to invite.
+            <p className="text-sm text-gray-500 mb-5">
+              Select one or more reviewers to invite for this submission.
             </p>
-            <input
-              type="email"
-              placeholder="reviewer@institution.edu"
-              value={reviewerEmail}
-              onChange={(e) => setReviewerEmail(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary mb-4"
-            />
-            <div className="flex gap-3">
+
+            {/* Dropdown trigger */}
+            <label className="block text-sm font-medium text-gray-900 mb-1.5">
+              Reviewers <span className="text-red-500">*</span>
+            </label>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setReviewerDropdownOpen((p) => !p)}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white text-left"
+              >
+                <span className="text-gray-500">
+                  {selectedReviewers.length === 0
+                    ? "Select reviewers..."
+                    : `${selectedReviewers.length} reviewer${
+                        selectedReviewers.length !== 1 ? "s" : ""
+                      } selected`}
+                </span>
+                <ChevronDown size={16} className="text-gray-400" />
+              </button>
+
+              {reviewerDropdownOpen && (
+                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-72 overflow-hidden flex flex-col">
+                  {/* Search */}
+                  <div className="p-2 border-b border-gray-100">
+                    <input
+                      type="text"
+                      autoFocus
+                      placeholder="Search by name or email..."
+                      value={reviewerSearch}
+                      onChange={(e) => setReviewerSearch(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  {/* List */}
+                  <div className="overflow-y-auto">
+                    {filteredReviewers.length === 0 ? (
+                      <p className="text-xs text-gray-400 italic p-3 text-center">
+                        No reviewers found.
+                      </p>
+                    ) : (
+                      filteredReviewers.map((r) => {
+                        const checked = selectedReviewers.includes(r.id);
+                        return (
+                          <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedReviewers((prev) =>
+                                checked
+                                  ? prev.filter((id) => id !== r.id)
+                                  : [...prev, r.id],
+                              );
+                            }}
+                            className={`w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
+                              checked ? "bg-primary/5" : ""
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              readOnly
+                              className="mt-0.5 accent-primary"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {r.name}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">
+                                {r.email}
+                              </p>
+                              {r.affiliation && (
+                                <p className="text-xs text-gray-400 truncate">
+                                  {r.affiliation}
+                                </p>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Selected chips */}
+            {selectedReviewers.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {selectedReviewers.map((id) => {
+                  const r = reviewers.find((x) => x.id === id);
+                  if (!r) return null;
+                  return (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary text-xs rounded-full"
+                    >
+                      {r.name}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedReviewers((prev) =>
+                            prev.filter((x) => x !== id),
+                          )
+                        }
+                        className="hover:text-red-500"
+                      >
+                        <X size={11} />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="flex gap-3 mt-6">
               <Button
                 variant="outline"
                 fullWidth
-                onClick={() =>
-                  setInviteModal({ open: false, submissionId: null })
-                }
+                onClick={() => {
+                  setReviewModal({ open: false, submissionId: null });
+                  setSelectedReviewers([]);
+                  setReviewerSearch("");
+                  setReviewerDropdownOpen(false);
+                }}
               >
                 Cancel
               </Button>
               <Button
                 fullWidth
-                loading={inviting}
-                onClick={handleInviteReviewer}
+                loading={sendToReviewMutation.isPending}
+                disabled={selectedReviewers.length === 0}
+                onClick={() => sendToReviewMutation.mutate()}
               >
-                Send Invitation
+                <Send size={14} />
+                Send to Review
               </Button>
             </div>
           </div>
@@ -701,6 +893,28 @@ export function EditorialPage() {
           </div>
         </div>
       )}
+      <RevisionUploadModal
+        open={editorUploadModal.open}
+        submissionId={editorUploadModal.submissionId}
+        fileRole={editorUploadModal.mode}
+        title={
+          editorUploadModal.mode === "edited_manuscript"
+            ? "Upload Edited Manuscript"
+            : "Upload Revised Manuscript"
+        }
+        description={
+          editorUploadModal.mode === "edited_manuscript"
+            ? "Upload the copyedited/proofread manuscript. This will move the submission to production."
+            : "Upload the editor-revised/copyedited version of the manuscript."
+        }
+        onClose={() =>
+          setEditorUploadModal({
+            open: false,
+            submissionId: null,
+            mode: "editor_revision",
+          })
+        }
+      />
     </div>
   );
 }

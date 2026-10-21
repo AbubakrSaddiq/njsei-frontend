@@ -16,6 +16,10 @@ const statusConfig: Record<string, { label: string; className: string }> = {
     label: "Under Review",
     className: "bg-purple-100 text-purple-700",
   },
+  under_second_review: {
+    label: "Second Review",
+    className: "bg-indigo-100 text-indigo-700",
+  },
   revision_required: {
     label: "Revision Required",
     className: "bg-orange-100 text-orange-700",

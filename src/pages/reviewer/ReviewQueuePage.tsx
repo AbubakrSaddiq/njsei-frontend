@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { Badge } from "@/components/ui/Badge";
 import api from "@/services/api";
+import { Upload } from "lucide-react";
+import { RevisionUploadModal } from "@/components/ui/RevisionUploadModal";
 
 export function ReviewQueuePage() {
   const queryClient = useQueryClient();
@@ -28,6 +30,12 @@ export function ReviewQueuePage() {
     comments_for_author: "",
     recommendation: "",
   });
+
+  const [uploadModal, setUploadModal] = useState<{
+    open: boolean;
+    submissionId: number | null;
+  }>({ open: false, submissionId: null });
+
   const [submitting, setSubmitting] = useState(false);
 
   const [downloading, setDownloading] = useState<number | null>(null);
@@ -176,7 +184,9 @@ export function ReviewQueuePage() {
                       ${invitation.status === "pending" ? "bg-yellow-100 text-yellow-700" : ""}
                       ${invitation.status === "accepted" ? "bg-green-100 text-green-700" : ""}
                       ${invitation.status === "declined" ? "bg-red-100 text-red-700" : ""}
+                      ${invitation.status === "second_review_pending" ? "bg-indigo-100 text-indigo-700" : ""}
                       ${invitation.status === "completed" ? "bg-blue-100 text-blue-700" : ""}
+                      
                     `}
                   >
                     {invitation.status === "pending" && (
@@ -188,8 +198,11 @@ export function ReviewQueuePage() {
                     {invitation.status === "declined" && (
                       <XCircle size={10} className="mr-1" />
                     )}
+                    {invitation.status === "second_review_pending" && (
+                      <Clock size={10} className="mr-1" />
+                    )}
                     {invitation.status.charAt(0).toUpperCase() +
-                      invitation.status.slice(1)}
+                      invitation.status.replace(/_/g, " ").slice(1)}
                   </span>
                   <span className="text-xs text-gray-400">
                     Invited{" "}
@@ -224,8 +237,9 @@ export function ReviewQueuePage() {
                   </div>
                 </div>
 
-                {/* ✅ Manuscript files — full-width block, stacks nicely on mobile */}
-                {invitation.status === "accepted" && (
+                {/* Manuscript files — full-width block, stacks nicely on mobile */}
+                {(invitation.status === "accepted" ||
+                  invitation.status === "second_review_pending") && (
                   <div className="border-t border-gray-100 pt-3">
                     <p className="text-xs text-gray-500 mb-2 font-medium">
                       Manuscript Files
@@ -275,7 +289,7 @@ export function ReviewQueuePage() {
                   </div>
                 )}
 
-                {/* ✅ Actions — full width on mobile, right-aligned on larger screens */}
+                {/* Actions — full width on mobile, right-aligned on larger screens */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pt-3 border-t border-gray-100">
                   {invitation.status === "pending" && (
                     <>
@@ -302,21 +316,67 @@ export function ReviewQueuePage() {
                   )}
 
                   {invitation.status === "accepted" && !invitation.review && (
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        setReviewModal({
-                          open: true,
-                          invitationId: invitation.id,
-                        })
-                      }
-                      className="w-full sm:w-auto"
-                    >
-                      <BookOpen size={13} />
-                      Submit Review
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          setReviewModal({
+                            open: true,
+                            invitationId: invitation.id,
+                          })
+                        }
+                        className="w-full sm:w-auto"
+                      >
+                        <BookOpen size={13} />
+                        Submit Review
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setUploadModal({
+                            open: true,
+                            submissionId: invitation.submission.id,
+                          })
+                        }
+                        className="w-full sm:w-auto"
+                      >
+                        <Upload size={13} />
+                        Upload Revised Manuscript
+                      </Button>
+                    </>
                   )}
-
+                  {invitation.status === "second_review_pending" && (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          setReviewModal({
+                            open: true,
+                            invitationId: invitation.id,
+                          })
+                        }
+                        className="w-full sm:w-auto"
+                      >
+                        <BookOpen size={13} />
+                        Submit Second Review
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setUploadModal({
+                            open: true,
+                            submissionId: invitation.submission.id,
+                          })
+                        }
+                        className="w-full sm:w-auto"
+                      >
+                        <Upload size={13} />
+                        Upload Revised Manuscript
+                      </Button>
+                    </>
+                  )}
                   {invitation.status === "completed" && (
                     <span className="text-xs text-green-600 font-medium flex items-center justify-center sm:justify-start gap-1">
                       <CheckCircle size={13} />
@@ -443,6 +503,14 @@ export function ReviewQueuePage() {
           </div>
         </div>
       )}
+      <RevisionUploadModal
+        open={uploadModal.open}
+        submissionId={uploadModal.submissionId}
+        fileRole="reviewer_revision"
+        title="Upload Revised Manuscript"
+        description="Upload your annotated/revised copy of the manuscript."
+        onClose={() => setUploadModal({ open: false, submissionId: null })}
+      />
     </div>
   );
 }

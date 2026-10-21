@@ -90,7 +90,8 @@ export function NotificationBell() {
   const { data } = useQuery({
     queryKey: ["notifications"],
     queryFn: notificationService.getAll,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: 300000, // Poll every 5 minutes while debugging
+    refetchOnWindowFocus: false,
   });
 
   const notifications = data?.notifications ?? [];

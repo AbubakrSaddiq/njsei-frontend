@@ -36,10 +36,12 @@ export const submissionService = {
     return data
   },
 
-  async sendToReview(id: number): Promise<any> {
-    const { data } = await api.post(`/submissions/${id}/send-to-review`)
-    return data
-  },
+ async sendToReview(id: number, reviewerIds: number[]): Promise<any> {
+  const { data } = await api.post(`/submissions/${id}/send-to-review`, {
+    reviewer_ids: reviewerIds,
+  })
+  return data
+},
 
   async requestRevision(id: number, revisionType: string): Promise<any> {
     const { data } = await api.post(`/submissions/${id}/request-revision`, {
@@ -83,6 +85,18 @@ export const submissionService = {
     const { data } = await api.get(`/submissions/${submissionId}/files/${fileId}/download`, {
       responseType: 'blob',
     })
+    return data
+  },
+
+  async uploadVersion(id: number, formData: FormData): Promise<any> {
+  const { data } = await api.post(`/submissions/${id}/upload`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+  },
+
+  async sendBackToReviewers(id: number): Promise<any> {
+    const { data } = await api.post(`/submissions/${id}/send-back-to-reviewers`)
     return data
   },
 }
